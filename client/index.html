@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PeaceKeeper AI — Unified Command Platform</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    .leaflet-tooltip.custom-country-tooltip { background: transparent; border: none; box-shadow: none; padding: 0; }
+    .tab-section { display: none; }
+    .tab-section.active-tab { display: block; }
+  </style>
+</head>
+<body class="bg-grid">
+  <!-- Auth Screen (If not logged in) -->
+  <div id="auth-container" class="auth-wrapper" style="display: none;">
+    <div class="glass-panel auth-box">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <i class="fas fa-shield-halved text-cyan glow-text-cyan" style="font-size: 38px; margin-bottom: 12px;"></i>
+        <h2 style="font-size: 24px;">PeaceKeeper AI Portal</h2>
+        <p style="color: var(--text-muted); font-size: 13px;">Authenticate to access all peacebuilding features under one link</p>
+      </div>
+
+      <div class="demo-account-pills">
+        <button type="button" class="demo-pill" id="fill-admin"><i class="fas fa-user-shield text-cyan"></i> Fill Admin Demo</button>
+        <button type="button" class="demo-pill" id="fill-observer"><i class="fas fa-user-astronaut text-green"></i> Fill Observer Demo</button>
+      </div>
+
+      <form id="auth-form">
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="auth-email" class="form-control" placeholder="admin@peacekeeper.ai" required>
+        </div>
+        <div class="form-group">
+          <label>Access Password</label>
+          <input type="password" id="auth-pass" class="form-control" placeholder="••••••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">
+          <i class="fas fa-key"></i> Authenticate & Enter Portal
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Unified Main App Container -->
+  <div id="app-container" class="app-layout" style="display: none;">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="#dashboard" class="nav-item tab-link active" data-tab="tab-dashboard"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="#map" class="nav-item tab-link" data-tab="tab-map"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="#risk" class="nav-item tab-link" data-tab="tab-risk"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="#alerts" class="nav-item tab-link" data-tab="tab-alerts"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="#osint" class="nav-item tab-link" data-tab="tab-osint"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="#conflicts" class="nav-item tab-link" data-tab="tab-conflicts"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="#satellite" class="nav-item tab-link" data-tab="tab-satellite"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="#treaties" class="nav-item tab-link" data-tab="tab-treaties"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="#analytics" class="nav-item tab-link" data-tab="tab-analytics"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="#reports" class="nav-item tab-link" data-tab="tab-reports"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="#settings" class="nav-item tab-link" data-tab="tab-settings"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <!-- 1. DASHBOARD TAB -->
+      <section id="tab-dashboard" class="tab-section active-tab">
+        <div class="top-bar">
+          <div class="page-title">
+            <h2>Executive Command Center</h2>
+            <p>Autonomous treaty monitoring and global conflict threat intelligence</p>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button id="btn-dash-new-report" class="btn btn-primary"><i class="fas fa-plus"></i> Submit Report</button>
+            <button id="btn-refresh-dash" class="btn btn-secondary"><i class="fas fa-arrows-rotate"></i> Refresh</button>
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="glass-panel stat-card">
+            <div class="stat-icon"><i class="fas fa-flag"></i></div>
+            <div><div class="stat-val" id="m-reports">0</div><div class="stat-lbl">Conflict Reports</div></div>
+          </div>
+          <div class="glass-panel stat-card">
+            <div class="stat-icon" style="background: rgba(255,0,85,0.1); color: var(--accent-red);"><i class="fas fa-radiation"></i></div>
+            <div><div class="stat-val text-red" id="m-critical">0</div><div class="stat-lbl">Critical Threat Level</div></div>
+          </div>
+          <div class="glass-panel stat-card">
+            <div class="stat-icon" style="background: rgba(255,183,3,0.1); color: var(--accent-yellow);"><i class="fas fa-bell"></i></div>
+            <div><div class="stat-val text-yellow" id="m-alerts">0</div><div class="stat-lbl">Active Alerts</div></div>
+          </div>
+          <div class="glass-panel stat-card">
+            <div class="stat-icon" style="background: rgba(157,78,221,0.1); color: var(--accent-purple);"><i class="fas fa-scale-unbalanced-stripe"></i></div>
+            <div><div class="stat-val text-purple" id="m-violations">0</div><div class="stat-lbl">Treaty Violations</div></div>
+          </div>
+        </div>
+
+        <div class="dashboard-grid">
+          <div>
+            <div class="glass-panel" style="padding: 20px; margin-bottom: 24px;">
+              <h3 style="font-size: 16px; margin-bottom: 12px;"><i class="fas fa-earth-americas text-cyan"></i> Operational Map Preview</h3>
+              <div id="dash-map" style="height: 380px; border-radius: 8px;"></div>
+            </div>
+            <div class="glass-panel" style="padding: 20px;">
+              <h3 style="font-size: 16px; margin-bottom: 12px;"><i class="fas fa-list text-cyan"></i> Recent Incident Log</h3>
+              <div class="table-responsive">
+                <table class="custom-table">
+                  <thead><tr><th>Location</th><th>Conflict Type</th><th>Risk Level</th><th>Status</th></tr></thead>
+                  <tbody id="dash-recent-table">Loading...</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="glass-panel" style="padding: 20px;">
+              <h3 style="font-size: 16px; margin-bottom: 12px;"><i class="fas fa-triangle-exclamation text-red"></i> High Priority Alerts</h3>
+              <div id="dash-alerts-box" style="display:flex; flex-direction:column; gap:10px;">Loading alerts...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. GIS MAP TAB -->
+      <section id="tab-map" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title">
+            <h2>Global Operational GIS Threat Map</h2>
+            <p>Hover over any country for risk indicators. Click to inspect live analysis and download PDF reports.</p>
+          </div>
+          <button id="btn-recenter" class="btn btn-secondary"><i class="fas fa-crosshairs"></i> Recenter Map</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px;">
+          <div id="full-map"></div>
+          <div class="glass-panel" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+                <h3 style="font-size: 20px;" id="panel-country-name">Select a Country</h3>
+                <span id="panel-badge" class="badge badge-info" role="button" tabindex="0">IDLE</span>
+              </div>
+              <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                  <span>AI Risk Level:</span><strong id="panel-risk-val" class="text-cyan">0%</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px;">
+                  <span>Safety Index:</span><strong id="panel-safe-val" class="text-green">100%</strong>
+                </div>
+                <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 16px;">
+                  <div id="panel-bar" style="width: 0%; height: 100%; background: var(--accent-cyan); transition: width 0.4s ease;"></div>
+                </div>
+              </div>
+              <div style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-bottom: 16px;">
+                <h4 style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Short Description</h4>
+                <p style="font-size: 13px; color: var(--text-main);" id="panel-desc">Hover or click any highlighted country polygon on the interactive map.</p>
+              </div>
+            </div>
+            <button id="btn-view-details" class="btn btn-primary" style="width: 100%; padding: 12px;" disabled>
+              <i class="fas fa-microchip"></i> View Full Analysis
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. AI RISK ENGINE TAB -->
+      <section id="tab-risk" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title">
+            <h2>AI Multi-Factor Conflict Risk Engine</h2>
+            <p>Real-time mathematical evaluation of regional instability and escalation probability</p>
+          </div>
+          <button id="btn-recalc" class="btn btn-primary"><i class="fas fa-rotate"></i> Recalculate Risk Engine</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 360px 1fr; gap: 24px;">
+          <div class="glass-panel risk-gauge-container">
+            <h3 style="font-size: 16px; margin-bottom: 20px;" id="gauge-region">Global Defense Sector</h3>
+            <div class="risk-circle-outer" id="gauge-circle">
+              <div class="risk-circle-inner">
+                <span class="risk-val-text text-red" id="gauge-score">67%</span>
+                <span class="risk-level-lbl" id="gauge-level">HIGH</span>
+              </div>
+            </div>
+            <p style="font-size: 12px; color: var(--text-muted); text-align: center;" id="gauge-rec">Standard peacekeeper observation protocol active.</p>
+          </div>
+          <div class="glass-panel" style="padding: 24px;">
+            <h3 style="font-size: 18px; margin-bottom: 20px;"><i class="fas fa-sliders text-cyan"></i> Algorithmic Weight Factor Breakdown</h3>
+            <div style="margin-bottom: 20px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Ground Reports (30%)</span><strong id="score-rep" class="text-cyan">80%</strong></div>
+              <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;"><div id="bar-rep" style="width: 80%; height: 100%; background: var(--accent-cyan);"></div></div>
+            </div>
+            <div style="margin-bottom: 20px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Satellite Hardware (25%)</span><strong id="score-sat" class="text-red">95%</strong></div>
+              <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;"><div id="bar-sat" style="width: 95%; height: 100%; background: var(--accent-red);"></div></div>
+            </div>
+            <div style="margin-bottom: 20px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Fake News Inverse (15%)</span><strong id="score-news" class="text-orange">88%</strong></div>
+              <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;"><div id="bar-news" style="width: 88%; height: 100%; background: var(--accent-orange);"></div></div>
+            </div>
+            <div style="margin-bottom: 20px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Negative Sentiment (15%)</span><strong id="score-sent" class="text-yellow">75%</strong></div>
+              <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;"><div id="bar-sent" style="width: 75%; height: 100%; background: var(--accent-yellow);"></div></div>
+            </div>
+            <div>
+              <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>Treaty Violations (15%)</span><strong id="score-treaty" class="text-purple">90%</strong></div>
+              <div style="height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;"><div id="bar-treaty" style="width: 90%; height: 100%; background: var(--accent-purple);"></div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. OSINT MEDIA TAB -->
+      <section id="tab-osint" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title">
+            <h2>OSINT Media Ingest & Fake News Ratings</h2>
+            <p>Automated news feed ingestion, disinformation scoring, and sentiment rating</p>
+          </div>
+          <button id="btn-open-ingest" class="btn btn-primary"><i class="fas fa-plus"></i> Ingest New Story</button>
+        </div>
+        <div class="news-grid" id="osint-news-grid">Loading OSINT stories...</div>
+      </section>
+
+      <!-- 5. CONFLICT REPORTS TAB -->
+      <section id="tab-conflicts" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title">
+            <h2>Conflict Incident Reports Management</h2>
+            <p>Ground observer reports, evidence uploads, and demilitarized area breaches</p>
+          </div>
+          <button id="btn-open-report-modal" class="btn btn-primary"><i class="fas fa-plus"></i> Submit Conflict Report</button>
+        </div>
+        <div class="glass-panel" style="padding: 20px;">
+          <div class="table-responsive">
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>Report ID</th><th>Country & Territory</th><th>Conflict Type</th><th>Coordinates</th><th>Risk Level</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="conflicts-table-body">Loading reports...</tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. SATELLITE TAB -->
+      <section id="tab-satellite" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title">
+            <h2>Satellite Synthetic Aperture Radar Inspector</h2>
+            <p>Orbital asset detection and military hardware classification</p>
+          </div>
+          <button id="btn-open-sat-modal" class="btn btn-primary"><i class="fas fa-cloud-arrow-up"></i> Upload Satellite Capture</button>
+        </div>
+        <div class="satellite-inspector">
+          <div class="sat-viewer-window glass-panel">
+            <img id="sat-main-img" src="https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?auto=format&fit=crop&w=1200&q=80">
+            <div class="sat-overlay-box" style="top: 25%; left: 35%; width: 120px; height: 90px;"><div class="sat-overlay-tag">Armored Tanks [6]</div></div>
+          </div>
+          <div class="glass-panel" style="padding: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 12px;"><i class="fas fa-circle-nodes text-cyan"></i> Detection Summary</h3>
+            <p style="margin-bottom:8px;"><strong>Region:</strong> <span id="sat-region-lbl">Zaporizhzhia Nuclear Perimeter</span></p>
+            <p style="display:flex; align-items:center; gap:8px;">
+              <strong>Buffer Zone Breach:</strong> 
+              <span id="sat-buffer-lbl" class="badge badge-flagged badge-critical" role="button" tabindex="0" data-region="Zaporizhzhia Nuclear Perimeter">YES (FLAGGED)</span>
+            </p>
+            <hr style="border-color:var(--border-color); margin:12px 0;">
+            <h4>Satellite Captures List:</h4>
+            <div id="sat-items-list" style="display:flex; flex-direction:column; gap:8px; margin-top:8px;">Loading feeds...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. TREATIES TAB -->
+      <section id="tab-treaties" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title"><h2>Treaty Compliance Tracker</h2><p>International non-proliferation accords and violation metrics</p></div>
+          <button id="btn-open-treaty-modal" class="btn btn-primary admin-only"><i class="fas fa-plus"></i> Track New Treaty</button>
+        </div>
+        <div class="glass-panel" style="padding: 20px;">
+          <table class="custom-table">
+            <thead><tr><th>Treaty Name</th><th>Signatories</th><th>Status</th><th>Violations</th><th class="admin-only">Actions</th></tr></thead>
+            <tbody id="treaties-table-body">Loading treaties...</tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 8. THREAT ALERTS TAB -->
+      <section id="tab-alerts" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title"><h2>Active Threat & Warning Alerts Log</h2><p>Real-time security warnings and dispatch status</p></div>
+          <button id="btn-open-alert-modal" class="btn btn-danger"><i class="fas fa-triangle-exclamation"></i> Issue Emergency Alert</button>
+        </div>
+        <div class="glass-panel" style="padding: 20px;">
+          <div id="alerts-main-list" style="display:flex; flex-direction:column; gap:12px;">Loading alerts...</div>
+        </div>
+      </section>
+
+      <!-- 9. PDF REPORTS TAB -->
+      <section id="tab-reports" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title"><h2>PDF Intelligence Briefing Generator</h2><p>Export authenticated PDF intelligence briefings</p></div>
+        </div>
+        <div class="glass-panel" style="padding: 24px; max-width: 550px;">
+          <h3 style="font-size: 16px; margin-bottom: 12px;"><i class="fas fa-file-pdf text-red"></i> Select Incident Log</h3>
+          <select id="pdf-report-select" class="form-control" style="margin-bottom: 16px;"></select>
+          <button id="btn-gen-pdf" class="btn btn-primary" style="width: 100%; padding: 12px;"><i class="fas fa-download"></i> Generate & Download PDF</button>
+        </div>
+      </section>
+
+      <!-- 10. ANALYTICS TAB -->
+      <section id="tab-analytics" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title"><h2>Platform Analytics Suite</h2><p>Statistical metrics and multi-dimensional trend charts</p></div>
+        </div>
+        <div class="charts-grid">
+          <div class="glass-panel chart-card"><h3 style="font-size:16px; margin-bottom:12px;">Monthly Trends</h3><div style="height:260px;"><canvas id="chart-m"></canvas></div></div>
+          <div class="glass-panel chart-card"><h3 style="font-size:16px; margin-bottom:12px;">Threat Distribution</h3><div style="height:260px;"><canvas id="chart-r"></canvas></div></div>
+        </div>
+      </section>
+
+      <!-- 11. SETTINGS TAB -->
+      <section id="tab-settings" class="tab-section">
+        <div class="top-bar">
+          <div class="page-title"><h2>Platform Settings & Role Switcher</h2><p>User preferences and role switcher demo</p></div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div class="glass-panel" style="padding: 24px;">
+            <h3 style="font-size: 16px; margin-bottom: 12px;"><i class="fas fa-user-gear text-cyan"></i> Active Session & Role Switcher</h3>
+            <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Toggle between Admin and Observer permissions live.</p>
+            <div style="display:flex; gap:12px;">
+              <button id="btn-switch-admin" class="btn btn-secondary" style="flex:1;"><i class="fas fa-shield-cat text-cyan"></i> Switch to Admin</button>
+              <button id="btn-switch-observer" class="btn btn-secondary" style="flex:1;"><i class="fas fa-user text-green"></i> Switch to Observer</button>
+            </div>
+          </div>
+          <div class="glass-panel" style="padding: 24px;">
+            <h3 style="font-size: 16px; margin-bottom: 12px;"><i class="fas fa-table text-green"></i> Google Sheets Database Active</h3>
+            <p style="font-size: 12px; color: var(--text-muted);">
+              All platform data persists live to Google Spreadsheet via Apps Script Web App API v4.
+            </p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ALL MODALS -->
+
+  <!-- Full Analysis Modal -->
+  <div class="modal-overlay" id="analysis-modal">
+    <div class="modal-container" style="max-width: 750px;">
+      <div class="modal-header">
+        <h3><i class="fas fa-brain text-cyan"></i> <span id="modal-title">Country Intelligence Analysis</span></h3>
+        <button class="close-modal" id="close-analysis-modal">&times;</button>
+      </div>
+      <div id="modal-analysis-content" style="font-size: 13px; max-height: 60vh; overflow-y: auto; padding-right: 6px;"></div>
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; color: var(--text-dim);">Analyzed strictly from real platform datasets</span>
+        <button id="btn-download-country-pdf" class="btn btn-danger"><i class="fas fa-file-pdf"></i> Download Complete Analysis PDF Report</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ingest News Modal -->
+  <div class="modal-overlay" id="ingest-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-newspaper text-cyan"></i> Ingest OSINT News Story</h3>
+        <button class="close-modal" id="close-ingest-modal">&times;</button>
+      </div>
+      <form id="ingest-form">
+        <div class="form-group"><label>Headline</label><input type="text" id="n-title" class="form-control" required></div>
+        <div class="form-group"><label>Region</label><input type="text" id="n-region" class="form-control" placeholder="Ukraine, Sudan..."></div>
+        <div class="form-group"><label>Content</label><textarea id="n-content" class="form-control" rows="3" required></textarea></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Ingest Story</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Report Modal -->
+  <div class="modal-overlay" id="report-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-flag text-cyan"></i> Submit Conflict Incident Report</h3>
+        <button class="close-modal" id="close-report-modal">&times;</button>
+      </div>
+      <form id="report-form">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="form-group"><label>Country</label><input type="text" id="r-country" class="form-control" required></div>
+          <div class="form-group"><label>State</label><input type="text" id="r-state" class="form-control"></div>
+        </div>
+        <div class="form-group"><label>Conflict Classification</label><input type="text" id="r-type" class="form-control" required></div>
+        <div class="form-group"><label>Description</label><textarea id="r-desc" class="form-control" rows="3" required></textarea></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;">Submit Incident Log</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Issue Alert Modal -->
+  <div class="modal-overlay" id="alert-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-triangle-exclamation text-red"></i> Broadcast Security Alert</h3>
+        <button class="close-modal" id="close-alert-modal">&times;</button>
+      </div>
+      <form id="alert-form">
+        <div class="form-group"><label>Severity Level</label><select id="a-level" class="form-control"><option value="Critical">Critical</option><option value="High">High</option><option value="Medium">Medium</option></select></div>
+        <div class="form-group"><label>Alert Title</label><input type="text" id="a-title" class="form-control" required></div>
+        <div class="form-group"><label>Message</label><textarea id="a-msg" class="form-control" rows="3" required></textarea></div>
+        <button type="submit" class="btn btn-danger" style="width:100%;">Issue Alert</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout, getToken, getUser, isAuthenticated } from '/assets/js/auth.js';
+    import { initMap, addThreatMarkers, addCountryGeoJSON } from '/assets/js/map.js';
+    import { initLineChart, initDoughnutChart } from '/assets/js/charts.js';
+    import { showToast } from '/assets/js/toast.js';
+    import { initBadgeInteractivity } from '/assets/js/badgeHandler.js';
+
+    let mapInstance = null;
+    let fullMapInstance = null;
+    let selectedCountryName = null;
+
+    if (!isAuthenticated()) {
+      document.getElementById('auth-container').style.display = 'flex';
+      document.getElementById('app-container').style.display = 'none';
+    } else {
+      document.getElementById('auth-container').style.display = 'none';
+      document.getElementById('app-container').style.display = 'flex';
+      renderUserSidebar();
+      initBadgeInteractivity();
+      initUnifiedApp();
+    }
+
+    document.getElementById('fill-admin').addEventListener('click', () => {
+      document.getElementById('auth-email').value = 'admin@peacekeeper.ai';
+      document.getElementById('auth-pass').value = 'password123';
+    });
+    document.getElementById('fill-observer').addEventListener('click', () => {
+      document.getElementById('auth-email').value = 'observer@peacekeeper.ai';
+      document.getElementById('auth-pass').value = 'password123';
+    });
+
+    document.getElementById('auth-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await apiRequest('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: document.getElementById('auth-email').value,
+            password: document.getElementById('auth-pass').value
+          })
+        });
+        if (res && res.data) {
+          localStorage.setItem('pk_token', res.data.token);
+          localStorage.setItem('pk_user', JSON.stringify(res.data.user));
+          showToast(`Welcome, ${res.data.user.name}`, 'success');
+          location.reload();
+        }
+      } catch (err) {
+        showToast('Login failed', 'error');
+      }
+    });
+
+    document.getElementById('btn-logout').addEventListener('click', logout);
+
+    function initUnifiedApp() {
+      const tabLinks = document.querySelectorAll('.tab-link');
+      const tabSections = document.querySelectorAll('.tab-section');
+
+      tabLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const targetTab = link.dataset.tab;
+          
+          tabLinks.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+
+          tabSections.forEach(s => s.classList.remove('active-tab'));
+          const targetEl = document.getElementById(targetTab);
+          if (targetEl) targetEl.classList.add('active-tab');
+
+          if (targetTab === 'tab-map' && !fullMapInstance) {
+            loadFullGisMap();
+          }
+          if (targetTab === 'tab-analytics') {
+            loadAnalyticsCharts();
+          }
+        });
+      });
+
+      loadDashboardData();
+      loadOSINTData();
+      loadReportsData();
+      loadTreatiesData();
+      loadAlertsData();
+      loadSatelliteFeeds();
+    }
+
+    async function loadDashboardData() {
+      try {
+        const res = await apiRequest('/dashboard/summary');
+        if (!res || !res.data) return;
+        const m = res.data.metrics;
+        document.getElementById('m-reports').textContent = m.totalReports;
+        document.getElementById('m-critical').textContent = m.criticalReports;
+        document.getElementById('m-alerts').textContent = m.activeAlerts;
+        document.getElementById('m-violations').textContent = m.totalViolations;
+
+        if (!mapInstance) {
+          mapInstance = initMap('dash-map');
+          const pinsRes = await apiRequest('/map/locations');
+          if (pinsRes && pinsRes.data) addThreatMarkers(mapInstance, pinsRes.data.pins);
+        }
+
+        const tbody = document.getElementById('dash-recent-table');
+        if (res.data.recentReports) {
+          tbody.innerHTML = res.data.recentReports.map(r => `
+            <tr>
+              <td><strong>${r.country}</strong></td><td>${r.conflictType}</td>
+              <td><span class="badge badge-${r.riskLevel ? r.riskLevel.toLowerCase() : 'medium'}" role="button" tabindex="0" data-region="${r.country}">${r.riskLevel} (${r.riskPercentage}%)</span></td>
+              <td>${r.status}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {}
+    }
+
+    async function loadFullGisMap() {
+      try {
+        fullMapInstance = initMap('full-map', [30.0, 40.0], 3);
+
+        const geoRes = await fetch('/api/v1/map/countries-geojson', {
+          headers: { 'Authorization': `Bearer ${getToken()}` }
+        });
+        const geojson = await geoRes.json();
+
+        if (geojson && geojson.features) {
+          addCountryGeoJSON(fullMapInstance, geojson, (props) => {
+            selectedCountryName = props.name;
+            document.getElementById('panel-country-name').textContent = props.name;
+            const pb = document.getElementById('panel-badge');
+            pb.textContent = props.riskLevel;
+            pb.className = `badge badge-${props.riskLevel ? props.riskLevel.toLowerCase() : 'info'}`;
+            pb.setAttribute('data-region', props.name);
+
+            document.getElementById('panel-risk-val').textContent = `${props.riskPercentage}%`;
+            document.getElementById('panel-safe-val').textContent = `${props.safePercentage}%`;
+            document.getElementById('panel-bar').style.width = `${props.riskPercentage}%`;
+            document.getElementById('panel-desc').textContent = props.shortDescription;
+            document.getElementById('btn-view-details').disabled = false;
+          });
+        }
+
+        const pinsRes = await apiRequest('/map/locations');
+        if (pinsRes && pinsRes.data) addThreatMarkers(fullMapInstance, pinsRes.data.pins);
+
+        document.getElementById('btn-recenter').addEventListener('click', () => {
+          if (fullMapInstance) fullMapInstance.setView([30.0, 40.0], 3);
+        });
+      } catch (err) {}
+    }
+
+    const modal = document.getElementById('analysis-modal');
+    document.getElementById('close-analysis-modal').addEventListener('click', () => modal.classList.remove('active'));
+
+    document.getElementById('btn-view-details').addEventListener('click', async () => {
+      if (!selectedCountryName) return;
+      modal.classList.add('active');
+      document.getElementById('modal-title').textContent = `${selectedCountryName} — Complete Intelligence Analysis`;
+      const contentBox = document.getElementById('modal-analysis-content');
+      contentBox.innerHTML = '<div style="color:var(--text-muted);">Fetching analyzed metrics...</div>';
+
+      const res = await apiRequest(`/map/country-analysis/${encodeURIComponent(selectedCountryName)}`);
+      if (res && res.data && res.data.analysis) {
+        const a = res.data.analysis;
+        contentBox.innerHTML = `
+          <div style="background:rgba(0,240,255,0.06); padding:12px; border-radius:8px; margin-bottom:16px;">
+            <strong>Status: ${a.activeConflictStatus}</strong><br/>
+            Risk Index: <span class="text-red">${a.riskPercentage}% (${a.riskLevel})</span> | Safety: <span class="text-green">${a.safePercentage}%</span>
+          </div>
+          <h4>Ground Incident Reports (${a.reportsCount})</h4>
+          <p>${a.reports.length ? a.reports.map(r => `• [${r.status}] ${r.conflictType}: ${r.description}`).join('<br>') : 'No direct ground reports logged.'}</p>
+          <h4>Satellite Radar Assets (${a.satellitesCount})</h4>
+          <p>${a.satellites.length ? a.satellites.map(s => `• Region: ${s.region} | Buffer Breach: ${s.bufferZoneFlag ? 'YES' : 'NO'}`).join('<br>') : 'No satellite radar anomalies logged.'}</p>
+          <h4>AI Recommendation</h4>
+          <p style="background:rgba(255,255,255,0.04); padding:10px; border-radius:6px;">${a.recommendation}</p>
+        `;
+      }
+    });
+
+    document.getElementById('btn-download-country-pdf').addEventListener('click', () => {
+      if (!selectedCountryName) return;
+      window.open(`/api/v1/map/country-analysis/${encodeURIComponent(selectedCountryName)}/pdf?token=${getToken()}`, '_blank');
+    });
+
+    document.getElementById('btn-recalc').addEventListener('click', async () => {
+      await apiRequest('/risk/recalculate', { method: 'POST', body: JSON.stringify({ region: 'Ukraine' }) });
+      showToast('AI Risk Engine recalculated successfully', 'success');
+    });
+
+    // Modals Wiring
+    const reportModal = document.getElementById('report-modal');
+    document.getElementById('btn-dash-new-report').addEventListener('click', () => reportModal.classList.add('active'));
+    document.getElementById('btn-open-report-modal').addEventListener('click', () => reportModal.classList.add('active'));
+    document.getElementById('close-report-modal').addEventListener('click', () => reportModal.classList.remove('active'));
+
+    document.getElementById('report-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        country: document.getElementById('r-country').value,
+        state: document.getElementById('r-state').value,
+        conflictType: document.getElementById('r-type').value,
+        description: document.getElementById('r-desc').value
+      };
+      await apiRequest('/reports', { method: 'POST', body: JSON.stringify(body) });
+      showToast('Conflict incident report logged', 'success');
+      reportModal.classList.remove('active');
+      loadReportsData();
+    });
+
+    const ingestModal = document.getElementById('ingest-modal');
+    document.getElementById('btn-open-ingest').addEventListener('click', () => ingestModal.classList.add('active'));
+    document.getElementById('close-ingest-modal').addEventListener('click', () => ingestModal.classList.remove('active'));
+
+    document.getElementById('ingest-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        title: document.getElementById('n-title').value,
+        relatedRegion: document.getElementById('n-region').value,
+        content: document.getElementById('n-content').value
+      };
+      await apiRequest('/news', { method: 'POST', body: JSON.stringify(body) });
+      showToast('OSINT story ingested and scored', 'success');
+      ingestModal.classList.remove('active');
+      loadOSINTData();
+    });
+
+    const alertModal = document.getElementById('alert-modal');
+    document.getElementById('btn-open-alert-modal').addEventListener('click', () => alertModal.classList.add('active'));
+    document.getElementById('close-alert-modal').addEventListener('click', () => alertModal.classList.remove('active'));
+
+    document.getElementById('alert-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        level: document.getElementById('a-level').value,
+        title: document.getElementById('a-title').value,
+        message: document.getElementById('a-msg').value
+      };
+      await apiRequest('/alerts', { method: 'POST', body: JSON.stringify(body) });
+      showToast('Alert broadcasted across platform', 'success');
+      alertModal.classList.remove('active');
+      loadAlertsData();
+    });
+
+    // Role Switchers
+    document.getElementById('btn-switch-admin').addEventListener('click', () => {
+      const user = getUser(); user.role = 'Admin'; localStorage.setItem('pk_user', JSON.stringify(user));
+      showToast('Switched to Admin role', 'success'); location.reload();
+    });
+    document.getElementById('btn-switch-observer').addEventListener('click', () => {
+      const user = getUser(); user.role = 'Observer'; localStorage.setItem('pk_user', JSON.stringify(user));
+      showToast('Switched to Observer role', 'info'); location.reload();
+    });
+
+    async function loadOSINTData() {
+      const res = await apiRequest('/news');
+      if (res && res.data && res.data.items) {
+        document.getElementById('osint-news-grid').innerHTML = res.data.items.map(n => `
+          <div class="glass-panel news-card">
+            <h3>${n.title}</h3>
+            <p style="font-size:12px; color:var(--text-muted); margin:6px 0;">${n.content}</p>
+            <span class="badge badge-medium" role="button" tabindex="0" data-region="${n.relatedRegion || 'Global'}">Disinfo Risk: ${n.fakeNewsScore}%</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function loadReportsData() {
+      const res = await apiRequest('/reports');
+      if (res && res.data && res.data.items) {
+        document.getElementById('conflicts-table-body').innerHTML = res.data.items.map(r => `
+          <tr>
+            <td><code>${r.id}</code></td><td><strong>${r.country}</strong></td><td>${r.conflictType}</td>
+            <td><code>${r.lat}, ${r.lng}</code></td>
+            <td><span class="badge badge-${r.riskLevel ? r.riskLevel.toLowerCase() : 'medium'}" role="button" tabindex="0" data-region="${r.country}">${r.riskLevel} (${r.riskPercentage}%)</span></td>
+            <td>${r.status}</td>
+            <td><button class="btn btn-secondary" style="padding:4px 8px; font-size:11px;">View</button></td>
+          </tr>
+        `).join('');
+
+        document.getElementById('pdf-report-select').innerHTML = res.data.items.map(r => `<option value="${r.id}">${r.country} — ${r.conflictType}</option>`).join('');
+      }
+    }
+
+    document.getElementById('btn-gen-pdf').addEventListener('click', () => {
+      const id = document.getElementById('pdf-report-select').value;
+      if (id) window.open(`/api/v1/reports/${id}/download?token=${getToken()}`, '_blank');
+    });
+
+    async function loadSatelliteFeeds() {
+      const res = await apiRequest('/satellite');
+      if (res && res.data && res.data.images) {
+        document.getElementById('sat-items-list').innerHTML = res.data.images.map(s => {
+          const badgeClass = s.bufferZoneFlag ? 'badge-breach badge-critical' : 'badge-clear badge-low';
+          const badgeText = s.bufferZoneFlag ? 'BREACH' : 'CLEAR';
+          return `
+            <div style="padding:10px; border-radius:8px; background:rgba(255,255,255,0.04); font-size:12px; display:flex; justify-content:space-between; align-items:center;">
+              <strong>${s.region}</strong>
+              <span class="badge ${badgeClass}" role="button" tabindex="0" data-region="${s.region}">${badgeText}</span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    async function loadTreatiesData() {
+      const res = await apiRequest('/treaties');
+      if (res && res.data && res.data.treaties) {
+        document.getElementById('treaties-table-body').innerHTML = res.data.treaties.map(t => `
+          <tr>
+            <td><strong>${t.name}</strong></td><td>${t.countries}</td>
+            <td><span class="badge badge-info" role="button" tabindex="0" data-region="${t.countries}">${t.status}</span></td>
+            <td><strong class="text-red">${t.violationCount} Violations</strong></td><td>-</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    async function loadAlertsData() {
+      const res = await apiRequest('/alerts');
+      if (res && res.data && res.data.alerts) {
+        document.getElementById('alerts-main-list').innerHTML = res.data.alerts.map(a => `
+          <div style="padding:12px; border-radius:8px; background:rgba(15,23,42,0.6); border-left:4px solid var(--accent-red); display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <strong>${a.title}</strong>
+              <p style="font-size:12px; color:var(--text-muted); margin:4px 0;">${a.message}</p>
+            </div>
+            <span class="badge badge-${a.level.toLowerCase()}" role="button" tabindex="0" data-region="${a.region}">${a.level}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    async function loadAnalyticsCharts() {
+      const resM = await apiRequest('/analytics/monthly');
+      if (resM && resM.data) initLineChart('chart-m', resM.data.labels, resM.data.datasets);
+
+      const resR = await apiRequest('/analytics/risk-distribution');
+      if (resR && resR.data) initDoughnutChart('chart-r', resR.data.labels, resR.data.data);
+    }
+  </script>
+</body>
+</html>

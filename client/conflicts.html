@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conflict Reports — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item active"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>Conflict Incident Reports Management</h2>
+          <p>Ground observer reports, evidence uploads, and demilitarized area breaches</p>
+        </div>
+        <button id="btn-new-report" class="btn btn-primary"><i class="fas fa-plus"></i> Submit Conflict Report</button>
+      </div>
+
+      <!-- Filters Bar -->
+      <div class="glass-panel" style="padding: 16px; margin-bottom: 20px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+        <input type="text" id="search-input" class="form-control" placeholder="Search by region, country or description..." style="flex: 1; min-width: 200px;">
+        <select id="filter-risk" class="form-control" style="width: 160px;">
+          <option value="">All Risk Levels</option>
+          <option value="Critical">Critical</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <button id="btn-apply-filter" class="btn btn-secondary"><i class="fas fa-filter"></i> Filter</button>
+      </div>
+
+      <!-- Reports Table -->
+      <div class="glass-panel" style="padding: 20px;">
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Report ID</th>
+                <th>Country & Territory</th>
+                <th>Conflict Type</th>
+                <th>Coordinates</th>
+                <th>AI Risk Index</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reports-table-body">
+              <tr><td colspan="7" style="text-align: center;">Loading conflict reports...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create Report Modal -->
+  <div class="modal-overlay" id="report-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-flag text-cyan"></i> Submit New Conflict Incident Report</h3>
+        <button class="close-modal" id="close-modal">&times;</button>
+      </div>
+      <form id="report-form" enctype="multipart/form-data">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Country / State</label>
+            <input type="text" id="rep-country" class="form-control" placeholder="e.g. Ukraine" required>
+          </div>
+          <div class="form-group">
+            <label>State / Sector</label>
+            <input type="text" id="rep-state" class="form-control" placeholder="e.g. Zaporizhzhia">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Latitude (Decimal)</label>
+            <input type="number" step="0.0001" id="rep-lat" class="form-control" placeholder="47.5085">
+          </div>
+          <div class="form-group">
+            <label>Longitude (Decimal)</label>
+            <input type="number" step="0.0001" id="rep-lng" class="form-control" placeholder="34.6241">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Conflict Classification Type</label>
+          <input type="text" id="rep-type" class="form-control" placeholder="e.g. Heavy Artillery Impact / Troop Surge" required>
+        </div>
+
+        <div class="form-group">
+          <label>Detailed Observations & Incident Notes</label>
+          <textarea id="rep-desc" class="form-control" rows="3" placeholder="Describe troop movements, weapon calibers, or civilian impacts..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label>Attach Field Evidence Images (Local Upload)</label>
+          <input type="file" id="rep-evidence" name="evidenceImages" class="form-control" accept="image/*" multiple>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fas fa-paper-plane"></i> Submit Incident Report</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- View Report Modal -->
+  <div class="modal-overlay" id="view-modal">
+    <div class="modal-container" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3 id="view-title">Report Details</h3>
+        <button class="close-modal" id="close-view-modal">&times;</button>
+      </div>
+      <div id="view-content" style="font-size: 13px;"></div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout, getUser } from '/assets/js/auth.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+      const user = getUser();
+
+      async function loadReports() {
+        const search = document.getElementById('search-input').value;
+        const riskLevel = document.getElementById('filter-risk').value;
+
+        try {
+          const res = await apiRequest(`/reports?search=${encodeURIComponent(search)}&riskLevel=${encodeURIComponent(riskLevel)}`);
+          if (!res || !res.data) return;
+
+          const tbody = document.getElementById('reports-table-body');
+          const items = res.data.items || [];
+
+          if (items.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7">No matching conflict reports found.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = items.map(r => `
+            <tr>
+              <td><code>${r.id}</code></td>
+              <td><strong>${r.country}</strong>, ${r.state || 'N/A'}</td>
+              <td>${r.conflictType}</td>
+              <td><code>${r.lat}, ${r.lng}</code></td>
+              <td><span class="badge badge-${r.riskLevel ? r.riskLevel.toLowerCase() : 'medium'}">${r.riskLevel} (${r.riskPercentage}%)</span></td>
+              <td>${r.status}</td>
+              <td style="display:flex; gap:6px;">
+                <button class="btn btn-secondary btn-view" data-id="${r.id}" style="padding:4px 8px; font-size:11px;"><i class="fas fa-eye"></i></button>
+                <a href="/reports.html?exportId=${r.id}" class="btn btn-secondary" style="padding:4px 8px; font-size:11px;" title="Export PDF"><i class="fas fa-file-pdf text-red"></i></a>
+                ${user.role === 'Admin' ? `<button class="btn btn-danger btn-delete" data-id="${r.id}" style="padding:4px 8px; font-size:11px;"><i class="fas fa-trash"></i></button>` : ''}
+              </td>
+            </tr>
+          `).join('');
+
+          // Bind view buttons
+          document.querySelectorAll('.btn-view').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.currentTarget.dataset.id;
+              const repRes = await apiRequest(`/reports/${id}`);
+              if (repRes && repRes.data && repRes.data.report) {
+                const rep = repRes.data.report;
+                document.getElementById('view-title').textContent = `${rep.country} Incident Log (${rep.id})`;
+                const imgHtml = rep.evidenceImages 
+                  ? rep.evidenceImages.split(',').map(url => `<img src="${url}" style="width:100%; max-height:220px; object-fit:cover; border-radius:8px; margin-top:8px;">`).join('')
+                  : '<p style="color:var(--text-muted); font-style:italic;">No evidence images attached.</p>';
+
+                document.getElementById('view-content').innerHTML = `
+                  <p style="margin-bottom:8px;"><strong>Classification:</strong> ${rep.conflictType}</p>
+                  <p style="margin-bottom:8px;"><strong>Coordinates:</strong> Lat ${rep.lat}, Lng ${rep.lng}</p>
+                  <p style="margin-bottom:8px;"><strong>AI Risk Index:</strong> <span class="badge badge-${rep.riskLevel.toLowerCase()}">${rep.riskLevel} (${rep.riskPercentage}%)</span></p>
+                  <p style="margin-bottom:12px;"><strong>Description:</strong> ${rep.description}</p>
+                  <hr style="border-color:var(--border-color); margin:12px 0;">
+                  <h4 style="margin-bottom:6px;">Field Evidence Attachments:</h4>
+                  ${imgHtml}
+                `;
+                document.getElementById('view-modal').classList.add('active');
+              }
+            });
+          });
+
+          // Bind admin delete buttons
+          document.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              if (confirm('Are you sure you want to delete this report record?')) {
+                const id = e.currentTarget.dataset.id;
+                await apiRequest(`/reports/${id}`, { method: 'DELETE' });
+                showToast('Report record deleted', 'info');
+                loadReports();
+              }
+            });
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadReports();
+      document.getElementById('btn-apply-filter').addEventListener('click', loadReports);
+
+      // Modals
+      const reportModal = document.getElementById('report-modal');
+      const viewModal = document.getElementById('view-modal');
+
+      document.getElementById('btn-new-report').addEventListener('click', () => reportModal.classList.add('active'));
+      document.getElementById('close-modal').addEventListener('click', () => reportModal.classList.remove('active'));
+      document.getElementById('close-view-modal').addEventListener('click', () => viewModal.classList.remove('active'));
+
+      // Check query param for new action
+      if (new URLSearchParams(window.location.search).get('action') === 'new') {
+        reportModal.classList.add('active');
+      }
+
+      // Form Submit
+      document.getElementById('report-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+        formData.append('country', document.getElementById('rep-country').value);
+        formData.append('state', document.getElementById('rep-state').value);
+        formData.append('lat', document.getElementById('rep-lat').value);
+        formData.append('lng', document.getElementById('rep-lng').value);
+        formData.append('conflictType', document.getElementById('rep-type').value);
+        formData.append('description', document.getElementById('rep-desc').value);
+
+        const files = document.getElementById('rep-evidence').files;
+        for (let i = 0; i < files.length; i++) {
+          formData.append('evidenceImages', files[i]);
+        }
+
+        await apiRequest('/reports', {
+          method: 'POST',
+          body: formData
+        });
+
+        showToast('Conflict Incident report logged successfully', 'success');
+        reportModal.classList.remove('active');
+        document.getElementById('report-form').reset();
+        loadReports();
+      });
+    }
+  </script>
+</body>
+</html>

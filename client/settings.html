@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Platform Settings — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item active"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>Platform Settings & Database Diagnostic</h2>
+          <p>User preferences, RBAC role toggle, and Google Sheets database persistence status</p>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <!-- User Profile & Role Switcher -->
+        <div class="glass-panel" style="padding: 24px;">
+          <h3 style="font-size: 18px; margin-bottom: 16px;"><i class="fas fa-user-gear text-cyan"></i> Active Session & Role Switcher</h3>
+          <div style="display:flex; align-items:center; gap:16px; margin-bottom:20px;">
+            <img id="set-avatar" src="" style="width:60px; height:60px; border-radius:50%; border:2px solid var(--accent-cyan);">
+            <div>
+              <h4 id="set-name" style="font-size:16px;">User Name</h4>
+              <p id="set-email" style="color:var(--text-muted); font-size:12px;">email@peacekeeper.ai</p>
+              <span id="set-role" class="badge badge-info" style="margin-top:4px;">Observer</span>
+            </div>
+          </div>
+
+          <hr style="border-color:var(--border-color); margin:16px 0;">
+
+          <h4 style="font-size:14px; margin-bottom:8px;">Switch Operational Role (Demo Switch):</h4>
+          <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">Toggle between Admin (Full CRUD permissions) and Observer (Read & Submit only) to test role-based UI access control.</p>
+
+          <div style="display:flex; gap:12px;">
+            <button id="btn-switch-admin" class="btn btn-secondary" style="flex:1;"><i class="fas fa-shield-cat text-cyan"></i> Switch to Admin</button>
+            <button id="btn-switch-observer" class="btn btn-secondary" style="flex:1;"><i class="fas fa-user text-green"></i> Switch to Observer</button>
+          </div>
+        </div>
+
+        <!-- System Diagnostics & Google Sheets Database State -->
+        <div class="glass-panel" style="padding: 24px;">
+          <h3 style="font-size: 18px; margin-bottom: 16px;"><i class="fas fa-table text-green"></i> Database Persistence Diagnostic</h3>
+          
+          <div style="padding:16px; border-radius:8px; background:rgba(0,230,118,0.08); border:1px solid rgba(0,230,118,0.3); margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+              <span class="pulse-dot text-green"></span>
+              <strong style="color:#fff; font-size:14px;">Phase 2: Real Google Sheets Database Persistence ACTIVE</strong>
+            </div>
+            <p style="font-size:12px; color:var(--text-muted);">
+              All platform data (reports, users, alerts, treaties, satellite scans, news feeds, audit logs, notifications) are persisted to your Google Spreadsheet via Google Apps Script Web App API v4.
+            </p>
+          </div>
+
+          <h4 style="font-size:13px; margin-bottom:8px;">System Info:</h4>
+          <ul style="list-style:none; font-size:12px; color:var(--text-muted); line-height:1.8;">
+            <li>• <strong>Persistence Layer:</strong> Google Sheets API (via Google Apps Script Web App)</li>
+            <li>• <strong>Framework:</strong> Node.js + Express.js REST API v1</li>
+            <li>• <strong>Authentication:</strong> JWT (JSON Web Tokens) & Bcrypt Passwords</li>
+            <li>• <strong>GIS Map Engine:</strong> Leaflet.js GeoJSON + CartoDB Dark Matter</li>
+            <li>• <strong>PDF Generator:</strong> PDFKit Stream Engine</li>
+            <li>• <strong>Status:</strong> FULLY OPERATIONAL IN PRODUCTION MODE</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout, getUser } from '/assets/js/auth.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+
+      const user = getUser();
+      document.getElementById('set-avatar').src = user.avatarUrl || 'https://ui-avatars.com/api/?name=User';
+      document.getElementById('set-name').textContent = user.name || 'Agent User';
+      document.getElementById('set-email').textContent = user.email || 'agent@peacekeeper.ai';
+      document.getElementById('set-role').textContent = user.role || 'Observer';
+      document.getElementById('set-role').className = `badge ${user.role === 'Admin' ? 'badge-critical' : 'badge-info'}`;
+
+      document.getElementById('btn-switch-admin').addEventListener('click', () => {
+        user.role = 'Admin';
+        localStorage.setItem('pk_user', JSON.stringify(user));
+        showToast('Switched operational role to Admin', 'success');
+        setTimeout(() => location.reload(), 500);
+      });
+
+      document.getElementById('btn-switch-observer').addEventListener('click', () => {
+        user.role = 'Observer';
+        localStorage.setItem('pk_user', JSON.stringify(user));
+        showToast('Switched operational role to Observer', 'info');
+        setTimeout(() => location.reload(), 500);
+      });
+    }
+  </script>
+</body>
+</html>

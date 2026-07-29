@@ -1,0 +1,188 @@
+/* Page specific CSS rules */
+
+/* Dashboard Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Map Containers */
+#leaflet-map, #full-map, #dash-map {
+  width: 100%;
+  height: 450px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+#full-map {
+  height: calc(100vh - 120px);
+  min-height: 400px;
+}
+
+/* Satellite Image Inspector */
+.satellite-inspector {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 20px;
+}
+
+@media (max-width: 900px) {
+  .satellite-inspector {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sat-viewer-window {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-highlight);
+  background: #000;
+  min-height: 380px;
+}
+
+.sat-viewer-window img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sat-overlay-box {
+  position: absolute;
+  border: 2px dashed var(--accent-red);
+  background: rgba(255, 0, 85, 0.15);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sat-overlay-tag {
+  position: absolute;
+  top: -24px;
+  left: 0;
+  background: var(--accent-red);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Risk Meter Gauge */
+.risk-gauge-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px;
+}
+
+.risk-circle-outer {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent-red) calc(var(--risk-val, 75) * 1%), #1E293B 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--glow-red);
+  margin-bottom: 16px;
+}
+
+.risk-circle-inner {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: #0F172A;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.risk-val-text {
+  font-size: 38px;
+  font-weight: 800;
+  font-family: var(--font-heading);
+}
+
+.risk-level-lbl {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-red);
+  text-transform: uppercase;
+}
+
+/* Analytics Charts Grid */
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.chart-card {
+  padding: 20px;
+  min-height: 350px;
+}
+
+/* OSINT News Cards */
+.news-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.news-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Auth Page Layout */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: radial-gradient(circle at center, #0F172A 0%, #040812 100%);
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 440px;
+  padding: 36px;
+}
+
+.demo-account-pills {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.demo-pill {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  text-align: center;
+  transition: var(--transition-fast);
+}
+
+.demo-pill:hover {
+  background: rgba(0, 240, 255, 0.1);
+  border-color: var(--accent-cyan);
+  color: #fff;
+}

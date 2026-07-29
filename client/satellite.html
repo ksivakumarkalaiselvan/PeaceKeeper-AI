@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Inspector — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item active"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>Satellite Synthetic Aperture Radar Viewer</h2>
+          <p>Orbital asset detection, military hardware classification, and buffer zone boundary alerts</p>
+        </div>
+        <button id="btn-upload-sat" class="btn btn-primary"><i class="fas fa-cloud-arrow-up"></i> Upload Satellite Image</button>
+      </div>
+
+      <div class="satellite-inspector">
+        <!-- Main Viewer Window -->
+        <div class="sat-viewer-window glass-panel">
+          <img id="active-sat-img" src="https://images.unsplash.com/photo-1541185933-ef5d8ed016c2?auto=format&fit=crop&w=1200&q=80" alt="Satellite Capture">
+          
+          <!-- Bounding Boxes Overlay -->
+          <div class="sat-overlay-box" style="top: 25%; left: 35%; width: 120px; height: 90px;">
+            <div class="sat-overlay-tag">Armored Tanks [6]</div>
+          </div>
+          <div class="sat-overlay-box" style="top: 55%; left: 60%; width: 140px; height: 100px; border-color: var(--accent-yellow);">
+            <div class="sat-overlay-tag" style="background: var(--accent-yellow); color:#000;">Artillery Battery [4]</div>
+          </div>
+        </div>
+
+        <!-- Details Panel -->
+        <div style="display: flex; flex-direction: column; gap: 16px;">
+          <div class="glass-panel" style="padding: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 12px;"><i class="fas fa-circle-nodes text-cyan"></i> Detection Summary</h3>
+            <div id="sat-meta">
+              <p style="margin-bottom: 8px;"><strong>Region:</strong> <span id="meta-region">Zaporizhzhia Nuclear Perimeter</span></p>
+              <p style="display: flex; align-items: center; gap: 8px;">
+                <strong>Buffer Zone Breach:</strong> 
+                <span id="meta-buffer" class="badge badge-flagged badge-critical" role="button" tabindex="0" data-region="Zaporizhzhia Nuclear Perimeter">YES (FLAGGED)</span>
+              </p>
+              <p style="margin-top: 8px;"><strong>Confidence Rating:</strong> <span id="meta-conf" class="text-cyan">94.2%</span></p>
+            </div>
+            <hr style="border-color: var(--border-color); margin: 12px 0;">
+            <h4 style="font-size: 13px; margin-bottom: 8px;">Objects Identified:</h4>
+            <ul style="list-style: none; font-size: 12px; color: var(--text-muted);" id="detected-list">
+              <li>• Heavy Armored Tanks: 6 units</li>
+              <li>• Mobile Artillery Battery: 4 units</li>
+              <li>• Field Fortification Lines: 2 sectors</li>
+            </ul>
+          </div>
+
+          <!-- Feeds Select Table -->
+          <div class="glass-panel" style="padding: 16px; flex: 1;">
+            <h3 style="font-size: 14px; margin-bottom: 10px;">Satellite Captures List:</h3>
+            <div id="sat-list" style="display: flex; flex-direction: column; gap: 8px;">
+              <div style="color:var(--text-muted); font-size:12px;">Loading feeds...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Upload Modal -->
+  <div class="modal-overlay" id="sat-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-satellite text-cyan"></i> Upload Satellite Capture</h3>
+        <button class="close-modal" id="close-sat-modal">&times;</button>
+      </div>
+      <form id="sat-form">
+        <div class="form-group">
+          <label>Target Region Name</label>
+          <input type="text" id="sat-region" class="form-control" placeholder="e.g. Kharkiv Border Corridor" required>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label>Latitude</label>
+            <input type="number" step="0.0001" id="sat-lat" class="form-control" placeholder="47.5085">
+          </div>
+          <div class="form-group">
+            <label>Longitude</label>
+            <input type="number" step="0.0001" id="sat-lng" class="form-control" placeholder="34.6241">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Image File or URL</label>
+          <input type="text" id="sat-url" class="form-control" placeholder="https://images.unsplash.com/photo-1541185933-ef5d8ed016c2">
+        </div>
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="sat-buffer" value="true" checked> Demilitarized Buffer Zone Boundary Breach
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fas fa-microchip"></i> Upload & Trigger Object Detection</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout } from '/assets/js/auth.js';
+    import { showToast } from '/assets/js/toast.js';
+    import { initBadgeInteractivity } from '/assets/js/badgeHandler.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+      initBadgeInteractivity();
+
+      async function loadSatelliteFeeds() {
+        try {
+          const res = await apiRequest('/satellite');
+          if (!res || !res.data) return;
+
+          const images = res.data.images || [];
+          const listContainer = document.getElementById('sat-list');
+
+          if (images.length === 0) {
+            listContainer.innerHTML = '<div style="color:var(--text-muted); font-size:12px;">No captures found.</div>';
+            return;
+          }
+
+          listContainer.innerHTML = images.map((img, idx) => {
+            const isBreach = img.bufferZoneFlag;
+            const badgeText = isBreach ? 'BREACH' : 'CLEAR';
+            const badgeClass = isBreach ? 'badge-breach badge-critical' : 'badge-clear badge-low';
+
+            return `
+              <div class="sat-item-pill" data-idx="${idx}" style="padding:10px; border-radius:8px; background:rgba(255,255,255,0.04); cursor:pointer; border:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong style="font-size:12px; display:block;">${img.region}</strong>
+                  <small style="color:var(--text-muted); font-size:10px;">${new Date(img.capturedAt).toLocaleDateString()}</small>
+                </div>
+                <span class="badge ${badgeClass}" role="button" tabindex="0" data-region="${img.region}">${badgeText}</span>
+              </div>
+            `;
+          }).join('');
+
+          // Select logic for item pill
+          document.querySelectorAll('.sat-item-pill').forEach(pill => {
+            pill.addEventListener('click', (e) => {
+              if (e.target.classList.contains('badge')) return; // let badge handler take over badge click
+              const idx = e.currentTarget.dataset.idx;
+              const selected = images[idx];
+              document.getElementById('active-sat-img').src = selected.imageUrl;
+              document.getElementById('meta-region').textContent = selected.region;
+              const mb = document.getElementById('meta-buffer');
+              mb.className = `badge ${selected.bufferZoneFlag ? 'badge-flagged badge-critical' : 'badge-clear badge-low'}`;
+              mb.textContent = selected.bufferZoneFlag ? 'YES (FLAGGED)' : 'NO (CLEAR)';
+              mb.setAttribute('data-region', selected.region);
+
+              try {
+                const parsed = typeof selected.objectDetectionResult === 'string' ? JSON.parse(selected.objectDetectionResult) : selected.objectDetectionResult;
+                document.getElementById('detected-list').innerHTML = `
+                  <li>• Armor / Vehicles: ${parsed.tanks || parsed.armoredPersonnelCarriers || 4} units</li>
+                  <li>• Artillery / Hardware: ${parsed.artilleryUnits || 2} units</li>
+                  <li>• Detection Confidence: ${Math.round((parsed.confidenceScore || 0.9) * 100)}%</li>
+                `;
+              } catch (err) {}
+            });
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadSatelliteFeeds();
+
+      // Modal
+      const modal = document.getElementById('sat-modal');
+      document.getElementById('btn-upload-sat').addEventListener('click', () => modal.classList.add('active'));
+      document.getElementById('close-sat-modal').addEventListener('click', () => modal.classList.remove('active'));
+
+      document.getElementById('sat-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+          region: document.getElementById('sat-region').value,
+          lat: document.getElementById('sat-lat').value,
+          lng: document.getElementById('sat-lng').value,
+          imageUrl: document.getElementById('sat-url').value || 'https://images.unsplash.com/photo-1541185933-ef5d8ed016c2',
+          bufferZoneFlag: document.getElementById('sat-buffer').checked
+        };
+
+        await apiRequest('/satellite', { method: 'POST', body: JSON.stringify(body) });
+        showToast('Satellite image uploaded and object detection executed', 'success');
+        modal.classList.remove('active');
+        document.getElementById('sat-form').reset();
+        loadSatelliteFeeds();
+      });
+    }
+  </script>
+</body>
+</html>

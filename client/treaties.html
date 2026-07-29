@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Treaty Compliance — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item active"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>Non-Proliferation & Peace Treaty Compliance</h2>
+          <p>International accords, demilitarized agreements, and violation logs</p>
+        </div>
+        <button id="btn-add-treaty" class="btn btn-primary admin-only"><i class="fas fa-plus"></i> Track New Treaty</button>
+      </div>
+
+      <div class="glass-panel" style="padding: 20px;">
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Treaty Name</th>
+                <th>Signatory Countries</th>
+                <th>Enactment Date</th>
+                <th>Status</th>
+                <th>Logged Violations</th>
+                <th>Official Document</th>
+                <th class="admin-only">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="treaty-table-body">
+              <tr><td colspan="7">Loading treaties...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Treaty Modal -->
+  <div class="modal-overlay" id="treaty-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-file-contract text-cyan"></i> Track International Accord</h3>
+        <button class="close-modal" id="close-treaty-modal">&times;</button>
+      </div>
+      <form id="treaty-form">
+        <div class="form-group">
+          <label>Accord / Treaty Name</label>
+          <input type="text" id="trt-name" class="form-control" placeholder="e.g. Geneva Convention Protocol I" required>
+        </div>
+        <div class="form-group">
+          <label>State Parties / Signatories</label>
+          <input type="text" id="trt-countries" class="form-control" placeholder="Global / Regional Coalition">
+        </div>
+        <div class="form-group">
+          <label>Official Document URL</label>
+          <input type="url" id="trt-url" class="form-control" placeholder="https://www.un.org/treaty">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fas fa-plus"></i> Save Treaty</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout, getUser } from '/assets/js/auth.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+
+      const user = getUser();
+
+      async function loadTreaties() {
+        try {
+          const res = await apiRequest('/treaties');
+          if (!res || !res.data) return;
+
+          const tbody = document.getElementById('treaty-table-body');
+          const treaties = res.data.treaties || [];
+
+          if (treaties.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7">No treaties tracked.</td></tr>';
+            return;
+          }
+
+          tbody.innerHTML = treaties.map(t => `
+            <tr>
+              <td><strong>${t.name}</strong></td>
+              <td>${t.countries}</td>
+              <td>${t.startDate}</td>
+              <td><span class="badge badge-info">${t.status}</span></td>
+              <td><strong class="text-red">${t.violationCount} Violations</strong></td>
+              <td><a href="${t.documentUrl || '#'}" target="_blank" class="text-cyan"><i class="fas fa-link"></i> Document</a></td>
+              ${user.role === 'Admin' ? `<td><button class="btn btn-danger btn-del-treaty" data-id="${t.id}" style="padding:4px 8px; font-size:11px;"><i class="fas fa-trash"></i></button></td>` : ''}
+            </tr>
+          `).join('');
+
+          document.querySelectorAll('.btn-del-treaty').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              if (confirm('Delete treaty record?')) {
+                const id = e.currentTarget.dataset.id;
+                await apiRequest(`/treaties/${id}`, { method: 'DELETE' });
+                showToast('Treaty deleted', 'info');
+                loadTreaties();
+              }
+            });
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadTreaties();
+
+      const modal = document.getElementById('treaty-modal');
+      const addBtn = document.getElementById('btn-add-treaty');
+      if (addBtn) addBtn.addEventListener('click', () => modal.classList.add('active'));
+      document.getElementById('close-treaty-modal').addEventListener('click', () => modal.classList.remove('active'));
+
+      document.getElementById('treaty-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+          name: document.getElementById('trt-name').value,
+          countries: document.getElementById('trt-countries').value,
+          documentUrl: document.getElementById('trt-url').value
+        };
+
+        await apiRequest('/treaties', { method: 'POST', body: JSON.stringify(body) });
+        showToast('Treaty added to compliance tracking matrix', 'success');
+        modal.classList.remove('active');
+        document.getElementById('treaty-form').reset();
+        loadTreaties();
+      });
+    }
+  </script>
+</body>
+</html>

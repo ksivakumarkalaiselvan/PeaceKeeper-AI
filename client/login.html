@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — PeaceKeeper AI Command Portal</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="auth-wrapper">
+    <div class="glass-panel auth-box">
+      <div style="text-align: center; margin-bottom: 24px;">
+        <i class="fas fa-shield-halved text-cyan glow-text-cyan" style="font-size: 38px; margin-bottom: 12px;"></i>
+        <h2 style="font-size: 24px;" id="auth-title">Command Portal Access</h2>
+        <p style="color: var(--text-muted); font-size: 13px;" id="auth-subtitle">Select role or enter credentials to authenticate</p>
+      </div>
+
+      <!-- Quick Demo Account Fillers -->
+      <div class="demo-account-pills">
+        <button type="button" class="demo-pill" id="fill-admin">
+          <i class="fas fa-user-shield text-cyan"></i> Fill Admin Demo
+        </button>
+        <button type="button" class="demo-pill" id="fill-observer">
+          <i class="fas fa-user-astronaut text-green"></i> Fill Observer Demo
+        </button>
+      </div>
+
+      <form id="auth-form">
+        <div class="form-group" id="name-group" style="display: none;">
+          <label>Full Name</label>
+          <input type="text" id="name" class="form-control" placeholder="Commander John Doe">
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="email" class="form-control" placeholder="agent@peacekeeper.ai" required>
+        </div>
+
+        <div class="form-group">
+          <label>Access Password</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••••••" required>
+        </div>
+
+        <div class="form-group" id="role-group" style="display: none;">
+          <label>Assigned Operational Role</label>
+          <select id="role" class="form-control">
+            <option value="Observer">Observer (Read & Submit Reports)</option>
+            <option value="Admin">Admin (Full Control & CRUD)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px; padding: 12px;">
+          <i class="fas fa-key"></i> <span id="btn-text">Authenticate & Access</span>
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 20px; font-size: 13px;">
+        <span id="toggle-msg">Need an operational account?</span>
+        <a href="#" id="toggle-mode" style="font-weight: 600; margin-left: 6px;">Register Account</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    let isRegistering = new URLSearchParams(window.location.search).get('register') === 'true';
+
+    const form = document.getElementById('auth-form');
+    const title = document.getElementById('auth-title');
+    const subtitle = document.getElementById('auth-subtitle');
+    const nameGroup = document.getElementById('name-group');
+    const roleGroup = document.getElementById('role-group');
+    const btnText = document.getElementById('btn-text');
+    const toggleMsg = document.getElementById('toggle-msg');
+    const toggleMode = document.getElementById('toggle-mode');
+
+    function updateUI() {
+      if (isRegistering) {
+        title.textContent = 'Create PeaceKeeper Credentials';
+        subtitle.textContent = 'Register a new operational account';
+        nameGroup.style.display = 'block';
+        roleGroup.style.display = 'block';
+        btnText.textContent = 'Register & Login';
+        toggleMsg.textContent = 'Already have credentials?';
+        toggleMode.textContent = 'Sign In';
+      } else {
+        title.textContent = 'Command Portal Access';
+        subtitle.textContent = 'Select role or enter credentials to authenticate';
+        nameGroup.style.display = 'none';
+        roleGroup.style.display = 'none';
+        btnText.textContent = 'Authenticate & Access';
+        toggleMsg.textContent = 'Need an operational account?';
+        toggleMode.textContent = 'Register Account';
+      }
+    }
+
+    updateUI();
+
+    toggleMode.addEventListener('click', (e) => {
+      e.preventDefault();
+      isRegistering = !isRegistering;
+      updateUI();
+    });
+
+    document.getElementById('fill-admin').addEventListener('click', () => {
+      isRegistering = false;
+      updateUI();
+      document.getElementById('email').value = 'admin@peacekeeper.ai';
+      document.getElementById('password').value = 'password123';
+      showToast('Admin credentials pre-filled', 'info');
+    });
+
+    document.getElementById('fill-observer').addEventListener('click', () => {
+      isRegistering = false;
+      updateUI();
+      document.getElementById('email').value = 'observer@peacekeeper.ai';
+      document.getElementById('password').value = 'password123';
+      showToast('Observer credentials pre-filled', 'info');
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        let endpoint = '/auth/login';
+        let body = { email, password };
+
+        if (isRegistering) {
+          endpoint = '/auth/register';
+          body = {
+            name: document.getElementById('name').value,
+            email,
+            password,
+            role: document.getElementById('role').value
+          };
+        }
+
+        const res = await apiRequest(endpoint, {
+          method: 'POST',
+          body: JSON.stringify(body)
+        });
+
+        if (res && res.data) {
+          localStorage.setItem('pk_token', res.data.token);
+          localStorage.setItem('pk_user', JSON.stringify(res.data.user));
+          showToast(`Welcome, ${res.data.user.name}`, 'success');
+          setTimeout(() => {
+            window.location.href = '/dashboard.html';
+          }, 600);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    });
+  </script>
+</body>
+</html>

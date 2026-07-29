@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executive Dashboard — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item active"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;">
+          <i class="fas fa-power-off"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>Executive Command Center</h2>
+          <p>Autonomous treaty monitoring and global conflict threat intelligence</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <a href="/conflicts.html?action=new" class="btn btn-primary"><i class="fas fa-plus"></i> Submit Report</a>
+          <button id="btn-refresh" class="btn btn-secondary"><i class="fas fa-arrows-rotate"></i> Refresh Data</button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="stats-grid">
+        <div class="glass-panel stat-card">
+          <div class="stat-icon"><i class="fas fa-flag"></i></div>
+          <div>
+            <div class="stat-val" id="metric-reports">0</div>
+            <div class="stat-lbl">Conflict Reports</div>
+          </div>
+        </div>
+
+        <div class="glass-panel stat-card">
+          <div class="stat-icon" style="background: rgba(255,0,85,0.1); color: var(--accent-red);"><i class="fas fa-radiation"></i></div>
+          <div>
+            <div class="stat-val text-red" id="metric-critical">0</div>
+            <div class="stat-lbl">Critical Risk Threats</div>
+          </div>
+        </div>
+
+        <div class="glass-panel stat-card">
+          <div class="stat-icon" style="background: rgba(255,183,3,0.1); color: var(--accent-yellow);"><i class="fas fa-bell"></i></div>
+          <div>
+            <div class="stat-val text-yellow" id="metric-alerts">0</div>
+            <div class="stat-lbl">Active Unacknowledged Alerts</div>
+          </div>
+        </div>
+
+        <div class="glass-panel stat-card">
+          <div class="stat-icon" style="background: rgba(157,78,221,0.1); color: var(--accent-purple);"><i class="fas fa-scale-unbalanced-stripe"></i></div>
+          <div>
+            <div class="stat-val text-purple" id="metric-violations">0</div>
+            <div class="stat-lbl">Logged Treaty Violations</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard Main Grid -->
+      <div class="dashboard-grid">
+        <!-- Left: Map Preview & Incidents -->
+        <div>
+          <div class="glass-panel" style="padding: 20px; margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="font-size: 16px;"><i class="fas fa-earth-americas text-cyan"></i> Operational Threat Map Preview</h3>
+              <a href="/map.html" class="btn btn-secondary" style="padding: 4px 10px; font-size: 11px;">Full Map View <i class="fas fa-arrow-right"></i></a>
+            </div>
+            <div id="leaflet-map"></div>
+          </div>
+
+          <!-- Recent Incident Reports -->
+          <div class="glass-panel" style="padding: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 16px;"><i class="fas fa-list text-cyan"></i> Recent Incident Log</h3>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Location</th>
+                    <th>Conflict Classification</th>
+                    <th>Risk Level</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-reports-body">
+                  <tr><td colspan="5" style="text-align:center;">Loading records...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Active High Priority Alerts & Activity Feed -->
+        <div>
+          <div class="glass-panel" style="padding: 20px; margin-bottom: 24px;">
+            <h3 style="font-size: 16px; margin-bottom: 16px;"><i class="fas fa-triangle-exclamation text-red"></i> High Priority Alerts</h3>
+            <div id="top-alerts-container" style="display: flex; flex-direction: column; gap: 12px;">
+              <div style="color: var(--text-muted); font-size: 13px;">Loading alerts...</div>
+            </div>
+          </div>
+
+          <div class="glass-panel" style="padding: 20px;">
+            <h3 style="font-size: 16px; margin-bottom: 16px;"><i class="fas fa-clock-rotate-left text-cyan"></i> Audit Activity Stream</h3>
+            <div id="activity-stream" style="display: flex; flex-direction: column; gap: 12px; font-size: 12px;">
+              <div style="color: var(--text-muted);">Loading audit logs...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout } from '/assets/js/auth.js';
+    import { initMap, addThreatMarkers } from '/assets/js/map.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+
+      let mapInstance = null;
+
+      async function loadDashboard() {
+        try {
+          const res = await apiRequest('/dashboard/summary');
+          if (!res || !res.data) return;
+
+          const { metrics, topAlerts, recentReports, recentActivities } = res.data;
+
+          // Metrics
+          document.getElementById('metric-reports').textContent = metrics.totalReports;
+          document.getElementById('metric-critical').textContent = metrics.criticalReports;
+          document.getElementById('metric-alerts').textContent = metrics.activeAlerts;
+          document.getElementById('metric-violations').textContent = metrics.totalViolations;
+
+          // Table
+          const tbody = document.getElementById('recent-reports-body');
+          if (recentReports.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5">No conflict reports logged.</td></tr>';
+          } else {
+            tbody.innerHTML = recentReports.map(r => `
+              <tr>
+                <td><strong>${r.country}</strong>, ${r.state || ''}</td>
+                <td>${r.conflictType}</td>
+                <td><span class="badge badge-${r.riskLevel ? r.riskLevel.toLowerCase() : 'medium'}">${r.riskLevel || 'Medium'} (${r.riskPercentage || 50}%)</span></td>
+                <td>${r.status}</td>
+                <td><a href="/conflicts.html?id=${r.id}" class="btn btn-secondary" style="padding: 4px 8px; font-size: 11px;"><i class="fas fa-eye"></i> View</a></td>
+              </tr>
+            `).join('');
+          }
+
+          // Alerts
+          const alertBox = document.getElementById('top-alerts-container');
+          if (topAlerts.length === 0) {
+            alertBox.innerHTML = '<div style="color:var(--text-muted); font-size:13px;">No critical unacknowledged alerts.</div>';
+          } else {
+            alertBox.innerHTML = topAlerts.map(a => `
+              <div style="padding: 12px; border-radius: 8px; background: rgba(255,0,85,0.08); border-left: 3px solid var(--accent-red);">
+                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                  <strong style="font-size:12px; color:#fff;">${a.title}</strong>
+                  <span class="badge badge-${a.level.toLowerCase()}">${a.level}</span>
+                </div>
+                <p style="font-size:11px; color:var(--text-muted); margin-bottom:6px;">${a.message}</p>
+                <small style="color:var(--text-dim);">${a.region} • ${new Date(a.createdAt).toLocaleTimeString()}</small>
+              </div>
+            `).join('');
+          }
+
+          // Activities
+          const actBox = document.getElementById('activity-stream');
+          if (recentActivities.length === 0) {
+            actBox.innerHTML = '<div style="color:var(--text-muted);">No recent logs.</div>';
+          } else {
+            actBox.innerHTML = recentActivities.map(act => `
+              <div style="padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                <strong style="color:var(--accent-cyan);">${act.action}</strong>: ${act.description}
+                <div style="color:var(--text-dim); font-size:10px;">${new Date(act.timestamp).toLocaleString()}</div>
+              </div>
+            `).join('');
+          }
+
+          // Map setup
+          if (!mapInstance) {
+            mapInstance = initMap('leaflet-map');
+            const mapData = await apiRequest('/map/locations');
+            if (mapData && mapData.data && mapData.data.pins) {
+              addThreatMarkers(mapInstance, mapData.data.pins);
+            }
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadDashboard();
+      document.getElementById('btn-refresh').addEventListener('click', loadDashboard);
+    }
+  </script>
+</body>
+</html>

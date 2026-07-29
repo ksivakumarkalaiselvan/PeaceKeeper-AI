@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Analytics Center — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item active"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>Platform Analytics & Statistical Intelligence</h2>
+          <p>Multi-dimensional trend analysis, risk distribution matrix, and treaty violation charts</p>
+        </div>
+      </div>
+
+      <div class="charts-grid">
+        <!-- Monthly Trends -->
+        <div class="glass-panel chart-card">
+          <h3 style="font-size: 16px; margin-bottom: 16px;"><i class="fas fa-chart-line text-cyan"></i> Monthly Conflict & Violation Trends</h3>
+          <div style="position: relative; height: 260px;">
+            <canvas id="chart-monthly"></canvas>
+          </div>
+        </div>
+
+        <!-- Risk Distribution -->
+        <div class="glass-panel chart-card">
+          <h3 style="font-size: 16px; margin-bottom: 16px;"><i class="fas fa-chart-pie text-red"></i> Threat Level Distribution</h3>
+          <div style="position: relative; height: 260px;">
+            <canvas id="chart-risk-dist"></canvas>
+          </div>
+        </div>
+
+        <!-- Country Breakdown -->
+        <div class="glass-panel chart-card">
+          <h3 style="font-size: 16px; margin-bottom: 16px;"><i class="fas fa-globe text-yellow"></i> Incident Breakdown by Country</h3>
+          <div style="position: relative; height: 260px;">
+            <canvas id="chart-country"></canvas>
+          </div>
+        </div>
+
+        <!-- Treaty Violations -->
+        <div class="glass-panel chart-card">
+          <h3 style="font-size: 16px; margin-bottom: 16px;"><i class="fas fa-scale-unbalanced-stripe text-purple"></i> Treaty Violations Logged</h3>
+          <div style="position: relative; height: 260px;">
+            <canvas id="chart-violations"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout } from '/assets/js/auth.js';
+    import { initLineChart, initDoughnutChart, initBarChart } from '/assets/js/charts.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+
+      async function loadAnalytics() {
+        try {
+          // 1. Monthly
+          const resM = await apiRequest('/analytics/monthly');
+          if (resM && resM.data) {
+            initLineChart('chart-monthly', resM.data.labels, resM.data.datasets);
+          }
+
+          // 2. Risk Distribution
+          const resR = await apiRequest('/analytics/risk-distribution');
+          if (resR && resR.data) {
+            initDoughnutChart('chart-risk-dist', resR.data.labels, resR.data.data);
+          }
+
+          // 3. By Country
+          const resC = await apiRequest('/analytics/by-country');
+          if (resC && resC.data) {
+            initBarChart('chart-country', resC.data.labels, resC.data.data);
+          }
+
+          // 4. Violations
+          const resV = await apiRequest('/analytics/violations');
+          if (resV && resV.data) {
+            initBarChart('chart-violations', resV.data.labels, resV.data.data);
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadAnalytics();
+    }
+  </script>
+</body>
+</html>

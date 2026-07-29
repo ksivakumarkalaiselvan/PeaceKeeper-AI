@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Threat Alerts — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item active"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>Active Threat & Warning Alerts Log</h2>
+          <p>Real-time security warnings, email dispatches, and command acknowledgment status</p>
+        </div>
+        <button id="btn-trigger-alert" class="btn btn-danger"><i class="fas fa-triangle-exclamation"></i> Issue Emergency Alert</button>
+      </div>
+
+      <div class="glass-panel" style="padding: 20px;">
+        <div id="alerts-list" style="display: flex; flex-direction: column; gap: 16px;">
+          <div style="color:var(--text-muted);">Loading alerts...</div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Trigger Alert Modal -->
+  <div class="modal-overlay" id="alert-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-triangle-exclamation text-red"></i> Issue Security Alert</h3>
+        <button class="close-modal" id="close-alert-modal">&times;</button>
+      </div>
+      <form id="alert-form">
+        <div class="form-group">
+          <label>Alert Severity Level</label>
+          <select id="alt-level" class="form-control">
+            <option value="Critical">Critical (Immediate Security Council Broadcast)</option>
+            <option value="High">High (High Priority Warning)</option>
+            <option value="Medium">Medium (Elevated Monitoring)</option>
+            <option value="Low">Low (Informational Log)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Alert Title</label>
+          <input type="text" id="alt-title" class="form-control" placeholder="e.g. Ceasefire Breach in Sector 4" required>
+        </div>
+        <div class="form-group">
+          <label>Region / Area</label>
+          <input type="text" id="alt-region" class="form-control" placeholder="e.g. Kharkiv, Ukraine">
+        </div>
+        <div class="form-group">
+          <label>Alert Message & Details</label>
+          <textarea id="alt-message" class="form-control" rows="3" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-danger" style="width: 100%;"><i class="fas fa-paper-plane"></i> Broadcast Alert</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout, getUser } from '/assets/js/auth.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+      const user = getUser();
+
+      async function loadAlerts() {
+        try {
+          const res = await apiRequest('/alerts');
+          if (!res || !res.data) return;
+
+          const container = document.getElementById('alerts-list');
+          const alerts = res.data.alerts || [];
+
+          if (alerts.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-muted);">No alerts registered.</div>';
+            return;
+          }
+
+          container.innerHTML = alerts.map(a => `
+            <div style="padding: 16px; border-radius: 10px; background: rgba(15,23,42,0.6); border: 1px solid var(--border-color); border-left: 4px solid ${a.level === 'Critical' ? 'var(--accent-red)' : 'var(--accent-yellow)'}; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                  <strong style="font-size:15px;">${a.title}</strong>
+                  <span class="badge badge-${a.level.toLowerCase()}">${a.level}</span>
+                  ${a.acknowledged ? '<span class="badge badge-low"><i class="fas fa-check"></i> Acknowledged</span>' : '<span class="badge badge-high"><i class="fas fa-clock"></i> Unacknowledged</span>'}
+                </div>
+                <p style="color:var(--text-muted); font-size:13px; margin-bottom:6px;">${a.message}</p>
+                <small style="color:var(--text-dim);">${a.region} • ${new Date(a.createdAt).toLocaleString()} • Email Dispatch: ${a.emailSent ? 'SENT' : 'OFF'}</small>
+              </div>
+              <div style="display:flex; gap:8px;">
+                ${!a.acknowledged ? `<button class="btn btn-secondary btn-ack" data-id="${a.id}" style="padding:6px 12px; font-size:12px;"><i class="fas fa-check"></i> Acknowledge</button>` : ''}
+                ${user.role === 'Admin' ? `<button class="btn btn-danger btn-del-alt" data-id="${a.id}" style="padding:6px 12px; font-size:12px;"><i class="fas fa-trash"></i></button>` : ''}
+              </div>
+            </div>
+          `).join('');
+
+          document.querySelectorAll('.btn-ack').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.currentTarget.dataset.id;
+              await apiRequest(`/alerts/${id}/acknowledge`, { method: 'PUT' });
+              showToast('Alert acknowledged', 'success');
+              loadAlerts();
+            });
+          });
+
+          document.querySelectorAll('.btn-del-alt').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              if (confirm('Delete alert entry?')) {
+                const id = e.currentTarget.dataset.id;
+                await apiRequest(`/alerts/${id}`, { method: 'DELETE' });
+                showToast('Alert deleted', 'info');
+                loadAlerts();
+              }
+            });
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadAlerts();
+
+      const modal = document.getElementById('alert-modal');
+      document.getElementById('btn-trigger-alert').addEventListener('click', () => modal.classList.add('active'));
+      document.getElementById('close-alert-modal').addEventListener('click', () => modal.classList.remove('active'));
+
+      document.getElementById('alert-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+          level: document.getElementById('alt-level').value,
+          title: document.getElementById('alt-title').value,
+          region: document.getElementById('alt-region').value,
+          message: document.getElementById('alt-message').value
+        };
+
+        await apiRequest('/alerts', { method: 'POST', body: JSON.stringify(body) });
+        showToast('Alert broadcasted across platform', 'success');
+        modal.classList.remove('active');
+        document.getElementById('alert-form').reset();
+        loadAlerts();
+      });
+    }
+  </script>
+</body>
+</html>

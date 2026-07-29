@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export PDF Reports — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item active"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>PDF Intelligence Briefing Generator</h2>
+          <p>Export authenticated PDF intelligence reports with AI risk metrics and official stamp</p>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        <!-- Select Report Card -->
+        <div class="glass-panel" style="padding: 24px;">
+          <h3 style="font-size: 18px; margin-bottom: 16px;"><i class="fas fa-file-pdf text-red"></i> Select Incident Record</h3>
+          <div class="form-group">
+            <label>Available Conflict Incident Logs</label>
+            <select id="report-select" class="form-control">
+              <option value="">Loading report records...</option>
+            </select>
+          </div>
+
+          <button id="btn-download-pdf" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 10px;">
+            <i class="fas fa-download"></i> Generate & Download PDF Report
+          </button>
+        </div>
+
+        <!-- PDF Preview Summary Card -->
+        <div class="glass-panel" style="padding: 24px;">
+          <h3 style="font-size: 18px; margin-bottom: 16px;"><i class="fas fa-eye text-cyan"></i> Document Preview Details</h3>
+          <div id="preview-box" style="font-size: 13px; color: var(--text-muted);">
+            <p>Select a report log from the dropdown to preview document metadata.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout, getToken } from '/assets/js/auth.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+
+      let reports = [];
+
+      async function initPdfExporter() {
+        try {
+          const res = await apiRequest('/reports');
+          if (!res || !res.data) return;
+
+          reports = res.data.items || [];
+          const select = document.getElementById('report-select');
+
+          if (reports.length === 0) {
+            select.innerHTML = '<option value="">No reports available</option>';
+            return;
+          }
+
+          select.innerHTML = reports.map(r => `
+            <option value="${r.id}">${r.country} — ${r.conflictType} (${r.riskLevel})</option>
+          `).join('');
+
+          // Select query param exportId if present
+          const exportId = new URLSearchParams(window.location.search).get('exportId');
+          if (exportId) {
+            select.value = exportId;
+          }
+
+          updatePreview();
+          select.addEventListener('change', updatePreview);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      function updatePreview() {
+        const id = document.getElementById('report-select').value;
+        const selected = reports.find(r => r.id === id);
+        const pBox = document.getElementById('preview-box');
+
+        if (!selected) {
+          pBox.innerHTML = '<p>No report selected.</p>';
+          return;
+        }
+
+        pBox.innerHTML = `
+          <p><strong>Document Ref:</strong> PEACEKEEPER-${selected.id}</p>
+          <p><strong>Territory:</strong> ${selected.country}, ${selected.state || ''}</p>
+          <p><strong>Conflict Type:</strong> ${selected.conflictType}</p>
+          <p><strong>AI Risk Level:</strong> <span class="badge badge-${selected.riskLevel ? selected.riskLevel.toLowerCase() : 'medium'}">${selected.riskLevel} (${selected.riskPercentage}%)</span></p>
+          <p><strong>Verification:</strong> ${selected.status}</p>
+          <p style="margin-top:10px;"><strong>Summary Excerpt:</strong> ${selected.description}</p>
+        `;
+      }
+
+      initPdfExporter();
+
+      document.getElementById('btn-download-pdf').addEventListener('click', () => {
+        const id = document.getElementById('report-select').value;
+        if (!id) {
+          showToast('Please select a report first', 'warning');
+          return;
+        }
+
+        const token = getToken();
+        window.open(`/api/v1/reports/${id}/download?token=${token}`, '_blank');
+        showToast('PDF Intelligence report streaming initialized', 'success');
+      });
+    }
+  </script>
+</body>
+</html>

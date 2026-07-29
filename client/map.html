@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GIS Threat Map — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    /* Custom Leaflet Tooltip */
+    .leaflet-tooltip.custom-country-tooltip {
+      background: transparent;
+      border: none;
+      box-shadow: none;
+      padding: 0;
+    }
+  </style>
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item active"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>Global Operational GIS Threat Map</h2>
+          <p>Hover over any country for instant risk indicators. Click to inspect live intelligence analysis.</p>
+        </div>
+        <button id="btn-recenter" class="btn btn-secondary"><i class="fas fa-crosshairs"></i> Recenter Map</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 340px; gap: 20px;">
+        <!-- Map Canvas -->
+        <div id="full-map"></div>
+
+        <!-- Country Click Details Panel -->
+        <div class="glass-panel" style="padding: 20px; display: flex; flex-direction: column; justify-content: space-between;" id="country-panel">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+              <h3 style="font-size: 20px;" id="panel-country-name">Select a Country</h3>
+              <span id="panel-badge" class="badge badge-info">IDLE</span>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px;">
+                <span>AI Risk Level:</span>
+                <strong id="panel-risk-val" class="text-cyan">0%</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 12px;">
+                <span>Safety Index:</span>
+                <strong id="panel-safe-val" class="text-green">100%</strong>
+              </div>
+
+              <!-- Bar gauge -->
+              <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; margin-bottom: 16px;">
+                <div id="panel-bar" style="width: 0%; height: 100%; background: var(--accent-cyan); transition: width 0.4s ease;"></div>
+              </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--border-color); padding-top: 12px; margin-bottom: 16px;">
+              <h4 style="font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Short Description</h4>
+              <p style="font-size: 13px; color: var(--text-main);" id="panel-desc">Hover or click any highlighted country polygon on the interactive map to inspect active conflict indicators.</p>
+            </div>
+          </div>
+
+          <div>
+            <button id="btn-view-details" class="btn btn-primary" style="width: 100%; padding: 12px;" disabled>
+              <i class="fas fa-microchip"></i> View Full Analysis
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Full Analysis Modal -->
+  <div class="modal-overlay" id="analysis-modal">
+    <div class="modal-container" style="max-width: 750px;">
+      <div class="modal-header">
+        <h3><i class="fas fa-brain text-cyan"></i> <span id="modal-title">Country Intelligence Analysis</span></h3>
+        <button class="close-modal" id="close-analysis-modal">&times;</button>
+      </div>
+
+      <div id="modal-analysis-content" style="font-size: 13px; max-height: 60vh; overflow-y: auto; padding-right: 6px;">
+        <div style="text-align: center; color: var(--text-muted);">Loading country analysis from database...</div>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; color: var(--text-dim);">Analyzed strictly from real platform datasets</span>
+        <button id="btn-download-country-pdf" class="btn btn-danger">
+          <i class="fas fa-file-pdf"></i> Download Complete Analysis PDF Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout, getToken } from '/assets/js/auth.js';
+    import { initMap, addThreatMarkers, addCountryGeoJSON } from '/assets/js/map.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+
+      let mapInstance = null;
+      let selectedCountryName = null;
+
+      async function loadFullMap() {
+        try {
+          mapInstance = initMap('full-map', [30.0, 40.0], 3);
+
+          // 1. Fetch country GeoJSON
+          const geoRes = await fetch('/api/v1/map/countries-geojson', {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
+          });
+          const geojson = await geoRes.json();
+
+          if (geojson && geojson.features) {
+            addCountryGeoJSON(mapInstance, geojson, (props) => {
+              // Click Handler for Country Polygon
+              selectedCountryName = props.name;
+              document.getElementById('panel-country-name').textContent = props.name;
+              document.getElementById('panel-badge').textContent = props.riskLevel;
+              document.getElementById('panel-badge').className = `badge badge-${props.riskLevel ? props.riskLevel.toLowerCase() : 'info'}`;
+              
+              document.getElementById('panel-risk-val').textContent = `${props.riskPercentage}%`;
+              document.getElementById('panel-risk-val').className = props.riskPercentage >= 50 ? 'text-red' : 'text-cyan';
+              
+              document.getElementById('panel-safe-val').textContent = `${props.safePercentage}%`;
+              document.getElementById('panel-bar').style.width = `${props.riskPercentage}%`;
+              document.getElementById('panel-bar').style.background = props.riskPercentage >= 50 ? 'var(--accent-red)' : 'var(--accent-cyan)';
+              
+              document.getElementById('panel-desc').textContent = props.shortDescription;
+              document.getElementById('btn-view-details').disabled = false;
+            });
+          }
+
+          // 2. Fetch pins
+          const resPins = await apiRequest('/map/locations');
+          if (resPins && resPins.data && resPins.data.pins) {
+            addThreatMarkers(mapInstance, resPins.data.pins);
+          }
+
+          document.getElementById('btn-recenter').addEventListener('click', () => {
+            if (mapInstance) mapInstance.setView([30.0, 40.0], 3);
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadFullMap();
+
+      // Details Modal
+      const modal = document.getElementById('analysis-modal');
+      const closeBtn = document.getElementById('close-analysis-modal');
+      const viewDetailsBtn = document.getElementById('btn-view-details');
+      const pdfBtn = document.getElementById('btn-download-country-pdf');
+
+      closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+      viewDetailsBtn.addEventListener('click', async () => {
+        if (!selectedCountryName) return;
+
+        modal.classList.add('active');
+        document.getElementById('modal-title').textContent = `${selectedCountryName} — Comprehensive AI Intelligence Analysis`;
+        const contentBox = document.getElementById('modal-analysis-content');
+        contentBox.innerHTML = '<div style="color:var(--text-muted);">Fetching analyzed database metrics...</div>';
+
+        try {
+          const res = await apiRequest(`/map/country-analysis/${encodeURIComponent(selectedCountryName)}`);
+          if (!res || !res.data || !res.data.analysis) return;
+
+          const a = res.data.analysis;
+
+          const reportListHtml = a.reports.length > 0
+            ? a.reports.map(r => `<li style="margin-bottom:8px;"><strong>[${r.status}] ${r.conflictType}</strong> (${r.lat}, ${r.lng}): ${r.description}</li>`).join('')
+            : '<li style="color:var(--text-muted); font-style:italic;">No direct ground conflict incident reports recorded.</li>';
+
+          const satListHtml = a.satellites.length > 0
+            ? a.satellites.map(s => `<li style="margin-bottom:6px;"><strong>Region: ${s.region}</strong> | Demilitarized Buffer Zone Breach: <span class="badge ${s.bufferZoneFlag ? 'badge-critical' : 'badge-low'}">${s.bufferZoneFlag ? 'YES (FLAGGED)' : 'NO'}</span></li>`).join('')
+            : '<li style="color:var(--text-muted); font-style:italic;">No satellite synthetic aperture radar anomalies logged.</li>';
+
+          const newsListHtml = a.newsFeeds.length > 0
+            ? a.newsFeeds.map(n => `<li style="margin-bottom:6px;">"${n.title}" — Disinfo Score: <strong>${n.fakeNewsScore}%</strong> | Sentiment Index: <strong>${n.sentimentScore}</strong></li>`).join('')
+            : '<li style="color:var(--text-muted); font-style:italic;">No OSINT media feeds matched.</li>';
+
+          contentBox.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,240,255,0.06); padding:12px; border-radius:8px; border:1px solid var(--border-highlight); margin-bottom:16px;">
+              <div>
+                <strong style="font-size:15px; color:#fff;">Status: ${a.activeConflictStatus}</strong>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:2px;">Risk Index: <span class="text-red" style="font-weight:700;">${a.riskPercentage}% (${a.riskLevel})</span> | Safety Index: <span class="text-green" style="font-weight:700;">${a.safePercentage}%</span></div>
+              </div>
+            </div>
+
+            <h4 style="color:var(--accent-cyan); margin-bottom:6px;"><i class="fas fa-flag"></i> Ground Conflict Incidents (${a.reportsCount})</h4>
+            <ul style="list-style:none; padding-left:0; margin-bottom:16px; font-size:12px; color:var(--text-main);">${reportListHtml}</ul>
+
+            <h4 style="color:var(--accent-cyan); margin-bottom:6px;"><i class="fas fa-satellite"></i> Satellite Asset Radar Scans (${a.satellitesCount})</h4>
+            <ul style="list-style:none; padding-left:0; margin-bottom:16px; font-size:12px; color:var(--text-main);">${satListHtml}</ul>
+
+            <h4 style="color:var(--accent-cyan); margin-bottom:6px;"><i class="fas fa-newspaper"></i> OSINT Media & Disinformation Feeds (${a.newsCount})</h4>
+            <ul style="list-style:none; padding-left:0; margin-bottom:16px; font-size:12px; color:var(--text-main);">${newsListHtml}</ul>
+
+            <h4 style="color:var(--accent-cyan); margin-bottom:6px;"><i class="fas fa-brain"></i> AI Tactical Recommendation</h4>
+            <p style="background:rgba(255,255,255,0.04); padding:10px; border-radius:6px; font-size:12px; color:var(--text-main); border-left:3px solid var(--accent-cyan);">${a.recommendation}</p>
+          `;
+        } catch (err) {
+          console.error(err);
+        }
+      });
+
+      pdfBtn.addEventListener('click', () => {
+        if (!selectedCountryName) return;
+        const token = getToken();
+        window.open(`/api/v1/map/country-analysis/${encodeURIComponent(selectedCountryName)}/pdf?token=${token}`, '_blank');
+        showToast(`Streaming PDF Country Report for ${selectedCountryName}`, 'success');
+      });
+    }
+  </script>
+</body>
+</html>

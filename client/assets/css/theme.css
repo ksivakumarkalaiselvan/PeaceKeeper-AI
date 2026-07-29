@@ -1,0 +1,165 @@
+/* Background Cyber Grid Pattern */
+.bg-grid {
+  background-image: 
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* Glassmorphism Container */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-card);
+  transition: var(--transition-normal);
+}
+
+.glass-panel:hover {
+  border-color: var(--border-highlight);
+}
+
+/* Glow & Accent Utilities */
+.text-cyan { color: var(--accent-cyan) !important; }
+.text-red { color: var(--accent-red) !important; }
+.text-orange { color: var(--accent-orange) !important; }
+.text-yellow { color: var(--accent-yellow) !important; }
+.text-green { color: var(--accent-green) !important; }
+.text-purple { color: var(--accent-purple) !important; }
+
+.glow-text-cyan { text-shadow: var(--glow-cyan); }
+.glow-text-red { text-shadow: var(--glow-red); }
+
+/* Interactive Clickable Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  z-index: 10;
+}
+
+/* Badge Hover & Scale Animations */
+.badge:hover {
+  transform: translateY(-2px) scale(1.05);
+  filter: brightness(1.2);
+}
+
+.badge:active {
+  transform: translateY(0) scale(0.96);
+}
+
+.badge:focus-visible {
+  box-shadow: 0 0 0 2px #FFFFFF, var(--glow-cyan);
+}
+
+/* Ripple effect on click */
+.badge .ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple-anim 0.6s linear;
+  background-color: rgba(255, 255, 255, 0.4);
+  pointer-events: none;
+}
+
+@keyframes ripple-anim {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* Badge Varieties */
+.badge-critical, .badge-breach, .badge-flagged {
+  background: rgba(255, 0, 85, 0.2);
+  color: #FF0055;
+  border: 1px solid rgba(255, 0, 85, 0.6);
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+}
+
+.badge-critical:hover, .badge-breach:hover, .badge-flagged:hover {
+  box-shadow: 0 0 18px rgba(255, 0, 85, 0.7);
+  background: rgba(255, 0, 85, 0.35);
+  color: #FFFFFF;
+}
+
+.badge-high {
+  background: rgba(255, 119, 0, 0.2);
+  color: var(--accent-orange);
+  border: 1px solid rgba(255, 119, 0, 0.6);
+}
+
+.badge-high:hover {
+  box-shadow: 0 0 15px rgba(255, 119, 0, 0.6);
+  color: #FFFFFF;
+}
+
+.badge-medium {
+  background: rgba(255, 183, 3, 0.2);
+  color: var(--accent-yellow);
+  border: 1px solid rgba(255, 183, 3, 0.6);
+}
+
+.badge-medium:hover {
+  box-shadow: 0 0 15px rgba(255, 183, 3, 0.6);
+  color: #FFFFFF;
+}
+
+.badge-low, .badge-clear {
+  background: rgba(0, 230, 118, 0.2);
+  color: var(--accent-green);
+  border: 1px solid rgba(0, 230, 118, 0.6);
+}
+
+.badge-low:hover, .badge-clear:hover {
+  box-shadow: 0 0 18px rgba(0, 230, 118, 0.7);
+  background: rgba(0, 230, 118, 0.35);
+  color: #FFFFFF;
+}
+
+.badge-info {
+  background: rgba(0, 240, 255, 0.2);
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 240, 255, 0.6);
+}
+
+.badge-info:hover {
+  box-shadow: var(--glow-cyan);
+  color: #FFFFFF;
+}
+
+/* Pulsing Status Dot */
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-green);
+  box-shadow: 0 0 8px var(--accent-green);
+  animation: pulse 2s infinite;
+}
+
+.pulse-dot.red {
+  background-color: var(--accent-red);
+  box-shadow: 0 0 8px var(--accent-red);
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); opacity: 1; }
+  50% { transform: scale(1.3); opacity: 0.6; }
+  100% { transform: scale(0.95); opacity: 1; }
+}

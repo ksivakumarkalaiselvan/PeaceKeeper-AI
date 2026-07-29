@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Risk Engine — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item active"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>AI Multi-Factor Conflict Risk Engine</h2>
+          <p>Real-time mathematical evaluation of regional instability and escalation probability</p>
+        </div>
+        <button id="btn-recalc" class="btn btn-primary"><i class="fas fa-rotate"></i> Recalculate Risk Engine</button>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 360px 1fr; gap: 24px;">
+        <!-- Circular Risk Gauge -->
+        <div class="glass-panel risk-gauge-container">
+          <h3 style="font-size: 16px; margin-bottom: 20px;" id="gauge-region">Zaporizhzhia Sector</h3>
+          <div class="risk-circle-outer" id="gauge-circle">
+            <div class="risk-circle-inner">
+              <span class="risk-val-text text-red" id="gauge-score">92%</span>
+              <span class="risk-level-lbl" id="gauge-level">CRITICAL</span>
+            </div>
+          </div>
+          <p style="font-size: 12px; color: var(--text-muted); text-align: center;" id="gauge-rec">
+            EMERGENCY: Immediate UN Security Council dispatch and conflict de-escalation intervention required.
+          </p>
+        </div>
+
+        <!-- Factor Breakdown & Sliders -->
+        <div class="glass-panel" style="padding: 24px;">
+          <h3 style="font-size: 18px; margin-bottom: 20px;"><i class="fas fa-sliders text-cyan"></i> Algorithmic Weight Factor Breakdown</h3>
+          
+          <!-- Factor 1 -->
+          <div style="margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+              <span><i class="fas fa-flag text-cyan"></i> Ground Report Frequency (Weight: 30%)</span>
+              <strong id="score-rep" class="text-cyan">80%</strong>
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+              <div id="bar-rep" style="width: 80%; height: 100%; background: var(--accent-cyan);"></div>
+            </div>
+          </div>
+
+          <!-- Factor 2 -->
+          <div style="margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+              <span><i class="fas fa-satellite text-red"></i> Satellite Hardware Detection (Weight: 25%)</span>
+              <strong id="score-sat" class="text-red">95%</strong>
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+              <div id="bar-sat" style="width: 95%; height: 100%; background: var(--accent-red);"></div>
+            </div>
+          </div>
+
+          <!-- Factor 3 -->
+          <div style="margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+              <span><i class="fas fa-newspaper text-orange"></i> Disinformation & Fake News Inverse (Weight: 15%)</span>
+              <strong id="score-news" class="text-orange">88%</strong>
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+              <div id="bar-news" style="width: 88%; height: 100%; background: var(--accent-orange);"></div>
+            </div>
+          </div>
+
+          <!-- Factor 4 -->
+          <div style="margin-bottom: 20px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+              <span><i class="fas fa-face-frown text-yellow"></i> Negative Tension & Sentiment (Weight: 15%)</span>
+              <strong id="score-sent" class="text-yellow">75%</strong>
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+              <div id="bar-sent" style="width: 75%; height: 100%; background: var(--accent-yellow);"></div>
+            </div>
+          </div>
+
+          <!-- Factor 5 -->
+          <div>
+            <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
+              <span><i class="fas fa-file-contract text-purple"></i> Active Treaty Violations (Weight: 15%)</span>
+              <strong id="score-treaty" class="text-purple">90%</strong>
+            </div>
+            <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden;">
+              <div id="bar-treaty" style="width: 90%; height: 100%; background: var(--accent-purple);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout } from '/assets/js/auth.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+
+      async function loadRiskData() {
+        try {
+          const res = await apiRequest('/risk');
+          if (!res || !res.data) return;
+
+          const evalData = res.data.evaluation;
+          document.getElementById('gauge-region').textContent = evalData.region || 'Global Perimeter';
+          document.getElementById('gauge-score').textContent = `${evalData.riskPercentage}%`;
+          document.getElementById('gauge-level').textContent = evalData.riskLevel;
+          document.getElementById('gauge-rec').textContent = evalData.recommendation;
+
+          // Color set
+          const levelClass = evalData.riskLevel === 'Critical' ? 'text-red' : (evalData.riskLevel === 'High' ? 'text-orange' : 'text-yellow');
+          document.getElementById('gauge-score').className = `risk-val-text ${levelClass}`;
+
+          if (evalData.breakdown) {
+            const bd = evalData.breakdown;
+            document.getElementById('score-rep').textContent = `${bd.reportCountNorm}%`;
+            document.getElementById('bar-rep').style.width = `${bd.reportCountNorm}%`;
+
+            document.getElementById('score-sat').textContent = `${bd.satelliteDetectionScore}%`;
+            document.getElementById('bar-sat').style.width = `${bd.satelliteDetectionScore}%`;
+
+            document.getElementById('score-news').textContent = `${bd.fakeNewsInverseScore}%`;
+            document.getElementById('bar-news').style.width = `${bd.fakeNewsInverseScore}%`;
+
+            document.getElementById('score-sent').textContent = `${bd.negativeSentimentScore}%`;
+            document.getElementById('bar-sent').style.width = `${bd.negativeSentimentScore}%`;
+
+            document.getElementById('score-treaty').textContent = `${bd.violationCountNorm}%`;
+            document.getElementById('bar-treaty').style.width = `${bd.violationCountNorm}%`;
+          }
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadRiskData();
+
+      document.getElementById('btn-recalc').addEventListener('click', async () => {
+        await apiRequest('/risk/recalculate', { method: 'POST', body: JSON.stringify({ region: 'Ukraine' }) });
+        showToast('AI Risk Engine recalculated successfully', 'success');
+        loadRiskData();
+      });
+    }
+  </script>
+</body>
+</html>

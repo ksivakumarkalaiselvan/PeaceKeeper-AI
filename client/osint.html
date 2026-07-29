@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OSINT Media Ingest — PeaceKeeper AI</title>
+  <link rel="stylesheet" href="/assets/css/base.css">
+  <link rel="stylesheet" href="/assets/css/theme.css">
+  <link rel="stylesheet" href="/assets/css/components.css">
+  <link rel="stylesheet" href="/assets/css/pages.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-grid">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="brand-header">
+        <i class="fas fa-shield-halved"></i>
+        <h1>PEACEKEEPER AI</h1>
+      </div>
+      <nav class="nav-menu">
+        <div class="nav-label">Command & Ops</div>
+        <a href="/dashboard.html" class="nav-item"><i class="fas fa-chart-line"></i> Dashboard</a>
+        <a href="/map.html" class="nav-item"><i class="fas fa-earth-americas"></i> GIS Threat Map</a>
+        <a href="/risk.html" class="nav-item"><i class="fas fa-brain"></i> AI Risk Engine</a>
+        <a href="/alerts.html" class="nav-item"><i class="fas fa-triangle-exclamation"></i> Threat Alerts</a>
+
+        <div class="nav-label">Intelligence Feeds</div>
+        <a href="/osint.html" class="nav-item active"><i class="fas fa-newspaper"></i> OSINT Media Ingest</a>
+        <a href="/conflicts.html" class="nav-item"><i class="fas fa-flag"></i> Conflict Reports</a>
+        <a href="/satellite.html" class="nav-item"><i class="fas fa-satellite"></i> Satellite Viewer</a>
+        <a href="/treaties.html" class="nav-item"><i class="fas fa-file-contract"></i> Treaty Tracker</a>
+
+        <div class="nav-label">Analytics & Reports</div>
+        <a href="/analytics.html" class="nav-item"><i class="fas fa-chart-pie"></i> Analytics Center</a>
+        <a href="/reports.html" class="nav-item"><i class="fas fa-file-pdf"></i> Export Intelligence PDF</a>
+        <a href="/settings.html" class="nav-item"><i class="fas fa-gear"></i> Settings</a>
+      </nav>
+
+      <div class="user-profile-bar">
+        <img id="user-avatar" class="user-avatar" src="" alt="User">
+        <div class="user-info">
+          <div id="user-name" class="user-name">Loading...</div>
+          <div id="user-role-badge" class="user-role-badge">Observer</div>
+        </div>
+        <button id="btn-logout" title="Logout" style="background:none; border:none; color:var(--text-muted); cursor:pointer;"><i class="fas fa-power-off"></i></button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="top-bar">
+        <div class="page-title">
+          <h2>OSINT Disinformation & News Monitor</h2>
+          <p>Automated news feed ingestion, fake news score rating, and sentiment analysis</p>
+        </div>
+        <button id="btn-open-ingest-modal" class="btn btn-primary"><i class="fas fa-plus"></i> Ingest New Story</button>
+      </div>
+
+      <!-- News Feed Grid -->
+      <div class="news-grid" id="news-grid">
+        <div style="color:var(--text-muted);">Loading OSINT stories...</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Ingest Modal -->
+  <div class="modal-overlay" id="ingest-modal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3><i class="fas fa-newspaper text-cyan"></i> Ingest OSINT News Story</h3>
+        <button class="close-modal" id="close-modal">&times;</button>
+      </div>
+      <form id="ingest-form">
+        <div class="form-group">
+          <label>Article Title / Headline</label>
+          <input type="text" id="news-title" class="form-control" placeholder="e.g. Unconfirmed troop movement..." required>
+        </div>
+        <div class="form-group">
+          <label>Source URL</label>
+          <input type="url" id="news-url" class="form-control" placeholder="https://news-agency.com/article">
+        </div>
+        <div class="form-group">
+          <label>Related Region / Territory</label>
+          <input type="text" id="news-region" class="form-control" placeholder="e.g. Ukraine, Sudan, Gaza">
+        </div>
+        <div class="form-group">
+          <label>Article Content / Excerpt</label>
+          <textarea id="news-content" class="form-control" rows="4" placeholder="Enter article content for AI scoring..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fas fa-brain"></i> Ingest & Score Article</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script type="module">
+    import { apiRequest } from '/assets/js/api.js';
+    import { checkAuth, renderUserSidebar, logout, getUser } from '/assets/js/auth.js';
+    import { showToast } from '/assets/js/toast.js';
+
+    if (checkAuth()) {
+      renderUserSidebar();
+      document.getElementById('btn-logout').addEventListener('click', logout);
+
+      const user = getUser();
+
+      async function loadNews() {
+        try {
+          const res = await apiRequest('/news');
+          if (!res || !res.data) return;
+
+          const grid = document.getElementById('news-grid');
+          const items = res.data.items || [];
+
+          if (items.length === 0) {
+            grid.innerHTML = '<div style="color:var(--text-muted);">No OSINT feeds ingested.</div>';
+            return;
+          }
+
+          grid.innerHTML = items.map(n => {
+            const fakeBadgeClass = n.fakeNewsScore > 60 ? 'badge-critical' : (n.fakeNewsScore > 30 ? 'badge-medium' : 'badge-low');
+            const verifiedBadge = n.verified ? '<span class="badge badge-low"><i class="fas fa-check"></i> Verified Credible</span>' : '<span class="badge badge-critical"><i class="fas fa-triangle-exclamation"></i> Unverified / Disinformation Risk</span>';
+            
+            return `
+              <div class="glass-panel news-card">
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                    <span class="badge badge-info">${n.relatedRegion || 'Global'}</span>
+                    <span class="badge ${fakeBadgeClass}">Disinfo Risk: ${n.fakeNewsScore}%</span>
+                  </div>
+                  <h3 style="font-size:16px; margin-bottom:8px;">${n.title}</h3>
+                  <p style="font-size:12px; color:var(--text-muted); margin-bottom:14px;">${n.content}</p>
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid rgba(255,255,255,0.05); padding-top:10px;">
+                    ${verifiedBadge}
+                    ${user.role === 'Admin' && !n.verified ? `<button class="btn btn-secondary btn-verify" data-id="${n.id}" style="padding:4px 8px; font-size:11px;">Verify</button>` : ''}
+                  </div>
+                  <small style="color:var(--text-dim); display:block; margin-top:8px;">Sentiment Index: ${n.sentimentScore || -0.2} | ${new Date(n.createdAt).toLocaleDateString()}</small>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          // Bind Admin Verify buttons
+          document.querySelectorAll('.btn-verify').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+              const id = e.target.dataset.id;
+              await apiRequest(`/news/${id}/verify`, { method: 'PUT', body: JSON.stringify({ verified: true, fakeNewsScore: 10 }) });
+              showToast('OSINT story verified as credible', 'success');
+              loadNews();
+            });
+          });
+        } catch (err) {
+          console.error(err);
+        }
+      }
+
+      loadNews();
+
+      // Modal handlers
+      const modal = document.getElementById('ingest-modal');
+      document.getElementById('btn-open-ingest-modal').addEventListener('click', () => modal.classList.add('active'));
+      document.getElementById('close-modal').addEventListener('click', () => modal.classList.remove('active'));
+
+      document.getElementById('ingest-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+          title: document.getElementById('news-title').value,
+          sourceUrl: document.getElementById('news-url').value,
+          relatedRegion: document.getElementById('news-region').value,
+          content: document.getElementById('news-content').value
+        };
+
+        await apiRequest('/news', { method: 'POST', body: JSON.stringify(body) });
+        showToast('OSINT News item ingested & scored by AI', 'success');
+        modal.classList.remove('active');
+        document.getElementById('ingest-form').reset();
+        loadNews();
+      });
+    }
+  </script>
+</body>
+</html>
