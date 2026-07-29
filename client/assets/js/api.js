@@ -1,6 +1,10 @@
 import { showToast } from './toast.js';
 
-const API_BASE = '/api/v1';
+const RENDER_URL = 'https://peacekeeper-ai.onrender.com';
+
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? '/api/v1'
+  : (window.location.origin.includes('onrender.com') ? '/api/v1' : `${RENDER_URL}/api/v1`);
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('pk_token');
@@ -20,7 +24,8 @@ export async function apiRequest(endpoint, options = {}) {
   };
 
   try {
-    const response = await fetch(`${API_BASE}${endpoint}`, config);
+    const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+    const response = await fetch(url, config);
     
     if (response.status === 401 && !endpoint.includes('/auth/login')) {
       localStorage.removeItem('pk_token');
