@@ -1,7 +1,24 @@
+const groqService = require('./groqService');
+const logger = require('../utils/logger');
+
 /**
- * Heuristic Fake News Disinformation Detector
+ * AI & Heuristic Disinformation Detector
  */
-const scoreFakeNews = (text = '', sourceUrl = '') => {
+const scoreFakeNews = async (text = '', sourceUrl = '') => {
+  // 1. Try Groq AI Intelligence Engine first
+  try {
+    if (groqService.isConfigured()) {
+      const groqResult = await groqService.analyzeDisinformation(text, sourceUrl);
+      if (groqResult && typeof groqResult.fakeNewsScore === 'number') {
+        logger.info(`[Groq AI Disinfo Scored]: ${groqResult.fakeNewsScore}% (Rating: ${groqResult.credibilityRating})`);
+        return groqResult.fakeNewsScore;
+      }
+    }
+  } catch (err) {
+    logger.warn(`[Groq Disinformation Scorer Notice]: Falling back to local heuristic - ${err.message}`);
+  }
+
+  // 2. Resilient Heuristic Fallback
   const suspiciousKeywords = ['unconfirmed', 'secret plot', 'shocking', 'leak', 'traitor', 'hidden truth', 'viral'];
   const reputableDomains = ['un.org', 'reuters.com', 'apnews.com', 'bbc.com', 'icrc.org', 'ctbto.org'];
   
@@ -9,12 +26,10 @@ const scoreFakeNews = (text = '', sourceUrl = '') => {
   const lowerText = text.toLowerCase();
   const lowerUrl = sourceUrl.toLowerCase();
 
-  // Check suspicious words
   suspiciousKeywords.forEach(kw => {
     if (lowerText.includes(kw)) score += 15;
   });
 
-  // Check domain credibility
   const isReputable = reputableDomains.some(domain => lowerUrl.includes(domain));
   if (isReputable) {
     score -= 30;
@@ -22,7 +37,6 @@ const scoreFakeNews = (text = '', sourceUrl = '') => {
     score += 25;
   }
 
-  // Bound score 0-100
   return Math.min(100, Math.max(5, Math.round(score)));
 };
 

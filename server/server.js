@@ -18,6 +18,7 @@ const reportExportRoutes = require('./routes/reportExportRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const mapRoutes = require('./routes/mapRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 
@@ -46,13 +47,18 @@ app.use('/api/v1/alerts', alertRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/map', mapRoutes);
+app.use('/api/v1/ai', aiRoutes);
 
 // Healthcheck
 app.get('/api/v1/health', (req, res) => {
+  const groqService = require('./services/groqService');
   res.json({
     status: 'online',
     system: 'PeaceKeeper AI — Autonomous Swarm Command',
-    mode: 'In-Memory Mock Persistence Layer (Pre-Database Integration Phase)',
+    groqAiEngine: {
+      status: groqService.isConfigured() ? 'active' : 'inactive',
+      model: groqService.primaryModel
+    },
     timestamp: new Date().toISOString()
   });
 });

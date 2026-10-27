@@ -32,8 +32,8 @@ const createNews = asyncHandler(async (req, res) => {
     return ApiResponse.error(res, 'Title and content are required', 400);
   }
 
-  const fakeNewsScore = scoreFakeNews(title + ' ' + content, sourceUrl || '');
-  const sentimentScore = scoreSentiment(title + ' ' + content);
+  const fakeNewsScore = await scoreFakeNews(title + ' ' + content, sourceUrl || '');
+  const sentimentScore = await scoreSentiment(title + ' ' + content);
 
   const newNews = await newsRepo.create({
     title,

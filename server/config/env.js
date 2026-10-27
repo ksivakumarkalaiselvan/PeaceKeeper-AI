@@ -6,5 +6,7 @@ module.exports = {
   JWT_SECRET: process.env.JWT_SECRET || 'peacekeeper_super_secret_jwt_key_2026',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   UPLOAD_PATH: path.join(__dirname, '../../server/uploads'),
-  NODE_ENV: process.env.NODE_ENV || 'development'
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  GROQ_API_KEY: process.env.GROQ_API_KEY || '',
+  GROQ_MODEL: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile'
 };

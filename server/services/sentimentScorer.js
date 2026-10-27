@@ -1,7 +1,24 @@
+const groqService = require('./groqService');
+const logger = require('../utils/logger');
+
 /**
- * Simple Sentiment Analyzer (-1.0 to +1.0)
+ * AI & Heuristic Sentiment Analyzer (-1.0 to +1.0)
  */
-const scoreSentiment = (text = '') => {
+const scoreSentiment = async (text = '') => {
+  // 1. Try Groq AI Geopolitical Sentiment Engine first
+  try {
+    if (groqService.isConfigured()) {
+      const groqResult = await groqService.analyzeGeopoliticalSentiment(text);
+      if (groqResult && typeof groqResult.sentimentScore === 'number') {
+        logger.info(`[Groq AI Sentiment Scored]: ${groqResult.sentimentScore} (${groqResult.escalationCategory})`);
+        return groqResult.sentimentScore;
+      }
+    }
+  } catch (err) {
+    logger.warn(`[Groq Sentiment Scorer Notice]: Falling back to local heuristic - ${err.message}`);
+  }
+
+  // 2. Resilient Heuristic Fallback
   const negativeWords = ['shelling', 'war', 'attack', 'breach', 'violation', 'killed', 'clash', 'artillery', 'casualty', 'missile', 'threat'];
   const positiveWords = ['peace', 'accord', 'truce', 'humanitarian', 'aid', 'dialogue', 'agreement', 'compliance', 'ceasefire', 'relief'];
 

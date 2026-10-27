@@ -6,11 +6,17 @@ export function initMap(elementId, center = [25.0, 45.0], zoom = 3) {
   // Initialize Leaflet map
   const map = L.map(elementId).setView(center, zoom);
 
-  // CartoDB Dark Matter tile layer
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    subdomains: 'abcd',
-    maxZoom: 19
+  // Defense-Grade Esri World Dark Gray Canvas (Free, no API key required, no watermarks)
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '&copy; Esri &copy; OpenStreetMap contributors',
+    maxZoom: 16
+  }).addTo(map);
+
+  // Border & territory labels overlay
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '',
+    maxZoom: 16,
+    opacity: 0.85
   }).addTo(map);
 
   return map;

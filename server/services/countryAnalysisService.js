@@ -3,10 +3,11 @@ const satelliteRepo = require('../repositories/satelliteRepo');
 const newsRepo = require('../repositories/newsRepo');
 const treatyRepo = require('../repositories/treatyRepo');
 const alertRepo = require('../repositories/alertRepo');
+const groqService = require('./groqService');
 const { calculateRisk } = require('./riskEngine');
 
 /**
- * Analyzes a specific country using ONLY real project database records.
+ * Analyzes a specific country using database records augmented by Groq AI synthesis.
  */
 const analyzeCountryData = async (countryName) => {
   if (!countryName) countryName = 'Global';
@@ -58,9 +59,30 @@ const analyzeCountryData = async (countryName) => {
     ? 'ACTIVE WAR / HIGH CONFLICT ZONE' 
     : 'STABLE / LOW CONFLICT RISK';
 
+  // 7. Request Groq AI Strategic Synthesis if available
+  let aiBrief = null;
+  if (groqService.isConfigured()) {
+    try {
+      aiBrief = await groqService.synthesizeCountryIntelligenceBrief(countryName, {
+        activeConflictStatus,
+        riskPercentage,
+        riskLevel,
+        reportsCount: reports.length,
+        satellitesCount: satellites.length,
+        newsCount: newsFeeds.length,
+        treaties,
+        reports
+      });
+    } catch (e) {
+      // Groq brief failure is non-fatal; fallback to heuristic logic below
+    }
+  }
+
   // Formulate concise short description
   let shortDescription = '';
-  if (reports.length > 0) {
+  if (aiBrief && aiBrief.strategicAssessment) {
+    shortDescription = aiBrief.strategicAssessment;
+  } else if (reports.length > 0) {
     shortDescription = `${reports.length} ground incident report(s) logged. Primary threat: ${reports[0].conflictType}.`;
   } else if (satellites.length > 0) {
     shortDescription = `Satellite radar scans logged active military asset detection in ${countryName}.`;
@@ -89,9 +111,17 @@ const analyzeCountryData = async (countryName) => {
     ? treaties.map(t => `• ${t.name} (${t.status}): ${t.violationCount} total violations logged.`).join('\n')
     : '• Governed under standard international demilitarization accords.';
 
+  const tacticalDirective = (aiBrief && aiBrief.peacekeeperDirective)
+    ? aiBrief.peacekeeperDirective
+    : riskEval.recommendation;
+
+  const trajectory = (aiBrief && aiBrief.threatTrajectory)
+    ? `\nThreat Trajectory: ${aiBrief.threatTrajectory}`
+    : '';
+
   const fullAnalysisText = `
 COUNTRY INTELLIGENCE SUMMARY: ${countryName.toUpperCase()}
-Operational Status: ${activeConflictStatus}
+Operational Status: ${activeConflictStatus}${trajectory}
 AI Risk Index: ${riskPercentage}% (${riskLevel}) | Safety Rating: ${safePercentage}%
 
 1. GROUND INCIDENT REPORTS LOGGED (${reports.length}):
@@ -106,8 +136,8 @@ ${osintDetails}
 4. APPLICABLE INTERNATIONAL TREATIES & VIOLATIONS (${treaties.length}):
 ${treatyDetails}
 
-5. TACTICAL AI RECOMMENDATION:
-${riskEval.recommendation}
+5. TACTICAL AI DIRECTIVE & DIRECTIVES:
+${tacticalDirective}
   `.trim();
 
   return {
@@ -117,6 +147,10 @@ ${riskEval.recommendation}
     safePercentage,
     hasActiveConflict,
     activeConflictStatus,
+    threatTrajectory: aiBrief?.threatTrajectory || 'Monitored',
+    strategicAssessment: aiBrief?.strategicAssessment || shortDescription,
+    peacekeeperDirective: tacticalDirective,
+    keyVulnerabilities: aiBrief?.keyVulnerabilities || [],
     shortDescription,
     reportsCount: reports.length,
     satellitesCount: satellites.length,
@@ -127,7 +161,7 @@ ${riskEval.recommendation}
     newsFeeds,
     treaties,
     alerts,
-    recommendation: riskEval.recommendation,
+    recommendation: tacticalDirective,
     breakdown: riskEval.breakdown,
     fullAnalysisText,
     evaluatedAt: new Date().toISOString()
